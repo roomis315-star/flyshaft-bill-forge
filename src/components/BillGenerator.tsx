@@ -46,8 +46,55 @@ const BillGenerator = () => {
     date: new Date().toISOString().split('T')[0],
     dueDate: ''
   });
-  
-  const [totalDiscount, setTotalDiscount] = useState(0);
+
+  // Amount in words conversion
+  const convertToWords = (amount: number): string => {
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    
+    const convertHundreds = (num: number): string => {
+      let result = '';
+      if (num >= 100) {
+        result += ones[Math.floor(num / 100)] + ' Hundred ';
+        num %= 100;
+      }
+      if (num >= 20) {
+        result += tens[Math.floor(num / 10)] + ' ';
+        num %= 10;
+      } else if (num >= 10) {
+        result += teens[num - 10] + ' ';
+        return result;
+      }
+      if (num > 0) {
+        result += ones[num] + ' ';
+      }
+      return result;
+    };
+
+    if (amount === 0) return 'Zero';
+    
+    const integerPart = Math.floor(amount);
+    let result = '';
+    
+    if (integerPart >= 10000000) {
+      result += convertHundreds(Math.floor(integerPart / 10000000)) + 'Crore ';
+      amount %= 10000000;
+    }
+    if (integerPart >= 100000) {
+      result += convertHundreds(Math.floor(integerPart / 100000)) + 'Lakh ';
+      amount %= 100000;
+    }
+    if (integerPart >= 1000) {
+      result += convertHundreds(Math.floor(integerPart / 1000)) + 'Thousand ';
+      amount %= 1000;
+    }
+    if (integerPart > 0) {
+      result += convertHundreds(integerPart);
+    }
+    
+    return result.trim() + ' only';
+  };
 
   const addLineItem = () => {
     const newId = Date.now().toString();
@@ -107,13 +154,45 @@ const BillGenerator = () => {
     const subtotal = calculateSubtotal();
     const itemDiscounts = calculateTotalItemDiscount();
     const gstAmount = calculateTotalGST();
-    const afterItemDiscounts = subtotal - itemDiscounts;
-    const totalDiscountAmount = (afterItemDiscounts * totalDiscount) / 100;
-    return afterItemDiscounts + gstAmount - totalDiscountAmount;
+    return subtotal - itemDiscounts + gstAmount;
   };
 
   const handlePrint = () => {
+    // Add print-specific styles
+    const printStyles = `
+      <style>
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .invoice-content, .invoice-content * {
+            visibility: visible;
+          }
+          .invoice-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          .hidden.print\\:block {
+            display: block !important;
+          }
+        }
+      </style>
+    `;
+    
+    const originalStyles = document.head.innerHTML;
+    document.head.innerHTML += printStyles;
+    
     window.print();
+    
+    // Clean up styles after printing
+    setTimeout(() => {
+      document.head.innerHTML = originalStyles;
+    }, 1000);
   };
 
   return (
@@ -227,32 +306,12 @@ const BillGenerator = () => {
               </CardContent>
             </Card>
 
-            {/* Total Discount */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Discount</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <Label htmlFor="totalDiscount">Total Bill Discount (%)</Label>
-                  <Input
-                    id="totalDiscount"
-                    type="number"
-                    value={totalDiscount}
-                    onChange={(e) => setTotalDiscount(Number(e.target.value))}
-                    placeholder="0"
-                    min="0"
-                    max="100"
-                  />
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Right Side - Bill Preview */}
           <div className="lg:col-span-2">
             <Card className="shadow-lg">
-              <CardContent className="p-8">
+              <CardContent className="p-8 invoice-content">
                 {/* Bill Header */}
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex items-center space-x-4">
@@ -271,7 +330,7 @@ const BillGenerator = () => {
                 </div>
 
                 {/* Invoice Details & Customer Info */}
-                <div className="grid md:grid-cols-2 gap-8 mb-8">
+                <div className="grid md:grid-cols-3 gap-8 mb-8">
                   <div>
                     <h3 className="font-semibold text-invoice-header mb-3">Bill To:</h3>
                     <div className="text-invoice-text space-y-1">
@@ -281,6 +340,18 @@ const BillGenerator = () => {
                       {customerInfo.email && <p>{customerInfo.email}</p>}
                     </div>
                   </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-invoice-header mb-3">Company Details:</h3>
+                    <div className="text-invoice-text space-y-1">
+                      <p className="font-medium">Flyshaft Technologies</p>
+                      <p>123 Tech Park, Electronic City</p>
+                      <p>Bangalore, Karnataka - 560100</p>
+                      <p>Phone: +91 80 1234 5678</p>
+                      <p>GST No: 29ABCDE1234F1Z5</p>
+                    </div>
+                  </div>
+                  
                   <div className="text-right">
                     <div className="space-y-2 text-invoice-text">
                       {invoiceDetails.date && (
@@ -420,12 +491,6 @@ const BillGenerator = () => {
                       </div>
                     )}
                     
-                    {totalDiscount > 0 && (
-                      <div className="flex justify-between py-2 text-invoice-text">
-                        <span>Additional Discount ({totalDiscount}%):</span>
-                        <span>-₹{((calculateSubtotal() - calculateTotalItemDiscount()) * totalDiscount / 100).toFixed(2)}</span>
-                      </div>
-                    )}
                     
                     {calculateTotalGST() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
