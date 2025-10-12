@@ -10,6 +10,7 @@ import flyshaftLogo from '@/assets/flyshaft-logo.png';
 interface LineItem {
   id: string;
   productName: string;
+  hsn: string;
   quantity: number;
   unitPrice: number;
   discount: number;
@@ -31,7 +32,7 @@ interface InvoiceDetails {
 
 const BillGenerator = () => {
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', productName: '', quantity: 1, unitPrice: 0, discount: 0, gstRate: 18 }
+    { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, gstRate: 18 }
   ]);
   
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -101,6 +102,7 @@ const BillGenerator = () => {
     setLineItems([...lineItems, {
       id: newId,
       productName: '',
+      hsn: '',
       quantity: 1,
       unitPrice: 0,
       discount: 0,
@@ -148,6 +150,14 @@ const BillGenerator = () => {
       const afterDiscount = subtotal - discountAmount;
       return sum + ((afterDiscount * item.gstRate) / 100);
     }, 0);
+  };
+
+  const calculateSGST = () => {
+    return calculateTotalGST() / 2;
+  };
+
+  const calculateIGST = () => {
+    return calculateTotalGST() / 2;
   };
 
   const calculateFinalTotal = () => {
@@ -377,8 +387,9 @@ const BillGenerator = () => {
                       <thead>
                         <tr className="border-b-2 border-border">
                           <th className="text-left py-3 px-2 font-semibold text-invoice-header">Product/Service</th>
+                          <th className="text-center py-3 px-2 font-semibold text-invoice-header">HSN</th>
                           <th className="text-center py-3 px-2 font-semibold text-invoice-header">Qty</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Unit Price</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Rate (₹)</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Discount</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">GST</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Total</th>
@@ -396,6 +407,15 @@ const BillGenerator = () => {
                                 className="border-0 bg-transparent p-0 focus-visible:ring-0 print:hidden"
                               />
                               <span className="hidden print:block text-invoice-text">{item.productName}</span>
+                            </td>
+                            <td className="py-3 px-2 text-center">
+                              <Input
+                                value={item.hsn}
+                                onChange={(e) => updateLineItem(item.id, 'hsn', e.target.value)}
+                                placeholder="HSN"
+                                className="border-0 bg-transparent p-0 text-center focus-visible:ring-0 print:hidden"
+                              />
+                              <span className="hidden print:block text-invoice-text">{item.hsn}</span>
                             </td>
                             <td className="py-3 px-2 text-center">
                               <Input
@@ -490,18 +510,30 @@ const BillGenerator = () => {
                         <span>-₹{calculateTotalItemDiscount().toFixed(2)}</span>
                       </div>
                     )}
-                    
-                    
-                    {calculateTotalGST() > 0 && (
+
+
+                    {calculateSGST() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
-                        <span>GST:</span>
-                        <span>₹{calculateTotalGST().toFixed(2)}</span>
+                        <span>SGST:</span>
+                        <span>₹{calculateSGST().toFixed(2)}</span>
                       </div>
                     )}
-                    
+
+                    {calculateIGST() > 0 && (
+                      <div className="flex justify-between py-2 text-invoice-text">
+                        <span>IGST:</span>
+                        <span>₹{calculateIGST().toFixed(2)}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between py-3 border-t-2 border-border font-bold text-lg text-invoice-header">
                       <span>Total:</span>
                       <span className="text-success">₹{calculateFinalTotal().toFixed(2)}</span>
+                    </div>
+
+                    <div className="pt-2 text-sm text-invoice-text">
+                      <span className="font-semibold">Amount in Words: </span>
+                      <span className="capitalize">{convertToWords(calculateFinalTotal())}</span>
                     </div>
                   </div>
                 </div>
@@ -509,6 +541,7 @@ const BillGenerator = () => {
                 {/* Footer */}
                 <div className="mt-12 pt-8 border-t border-border text-center text-sm text-invoice-light">
                   <p>Thank you for your business!</p>
+                  <p className="mt-2 text-xs">This is a computer generated invoice</p>
                 </div>
               </CardContent>
             </Card>
