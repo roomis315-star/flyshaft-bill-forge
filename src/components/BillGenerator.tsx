@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Plus, Printer } from 'lucide-react';
 import flyshaftLogo from '@/assets/flyshaft-logo.png';
+import { Checkbox } from '@/components/ui/checkbox';
+
 
 interface LineItem {
   id: string;
@@ -31,72 +33,100 @@ interface InvoiceDetails {
   dueDate: string;
 }
 
+// const [shippingInfo, setShippingInfo] = useState<CustomerInfo>({
+//   name: '',
+//   address: '',
+//   phone: '',
+//   email: ''
+// });
+// const [sameAsBilling, setSameAsBilling] = useState<boolean>(true);
+
+// useEffect(() => {
+//   if (sameAsBilling) {
+//     setShippingInfo(customerInfo);
+//   }
+//   // eslint-disable-next-line react-hooks/exhaustive-deps
+// }, [customerInfo, sameAsBilling]);
+
 const BillGenerator = () => {
- const [lineItems, setLineItems] = useState<LineItem[]>([
-  { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, igstRate: 9 }
-]);
-  
+  const [lineItems, setLineItems] = useState<LineItem[]>([
+    { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, igstRate: 9 }
+  ]);
+
+
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     address: '',
     phone: '',
     email: ''
   });
-  
+
   const [invoiceDetails, setInvoiceDetails] = useState<InvoiceDetails>({
     invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
     dueDate: ''
   });
 
-  // Amount in words conversion
-const convertToWords = (amount: number): string => {
-  if (isNaN(amount)) return "";
-  const a = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
-  const b = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
-  const units = (n: number) => {
-    if (n < 20) return a[n];
-    const t = Math.floor(n / 10), r = n % 10;
-    return b[t] + (r ? " " + a[r] : "");
-  };
-  const toWords = (n: number): string => {
-    if (n === 0) return "Zero";
-    let str = "";
-    let num = n;
-    const crore = Math.floor(num / 10000000); num %= 10000000;
-    const lakh = Math.floor(num / 100000); num %= 100000;
-    const thousand = Math.floor(num / 1000); num %= 1000;
-    const hundred = Math.floor(num / 100); num %= 100;
-    if (crore) str += toWords(crore) + " Crore ";
-    if (lakh) str += toWords(lakh) + " Lakh ";
-    if (thousand) str += toWords(thousand) + " Thousand ";
-    if (hundred) str += a[hundred] + " Hundred ";
-    if (num) str += (str ? "and " : "") + units(num) + " ";
-    return str.trim();
-  };
-  const whole = Math.floor(amount);
-  const paise = Math.round((amount - whole) * 100);
-  let words = toWords(whole) + " Rupees";
-  if (paise) words += " and " + toWords(paise) + " Paise";
-  return words + " Only";
-};
+  const [shippingInfo, setShippingInfo] = useState<CustomerInfo>({
+    name: '',
+    address: '',
+    phone: '',
+    email: ''
+  });
+  const [sameAsBilling, setSameAsBilling] = useState<boolean>(true);
 
-const addLineItem = () => {
-  const newId = Date.now().toString();
-  setLineItems([
-    ...lineItems,
-    {
-      id: newId,
-      productName: '',
-      hsn: '',
-      quantity: 1,
-      unitPrice: 0,
-      discount: 0,
-      sgstRate: 9,
-      igstRate: 0,
-    },
-  ]);
-};
+  useEffect(() => {
+    if (sameAsBilling) setShippingInfo(customerInfo);
+  }, [customerInfo, sameAsBilling]);
+
+  // Amount in words conversion
+  const convertToWords = (amount: number): string => {
+    if (isNaN(amount)) return "";
+    const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+    const units = (n: number) => {
+      if (n < 20) return a[n];
+      const t = Math.floor(n / 10), r = n % 10;
+      return b[t] + (r ? " " + a[r] : "");
+    };
+    const toWords = (n: number): string => {
+      if (n === 0) return "Zero";
+      let str = "";
+      let num = n;
+      const crore = Math.floor(num / 10000000); num %= 10000000;
+      const lakh = Math.floor(num / 100000); num %= 100000;
+      const thousand = Math.floor(num / 1000); num %= 1000;
+      const hundred = Math.floor(num / 100); num %= 100;
+      if (crore) str += toWords(crore) + " Crore ";
+      if (lakh) str += toWords(lakh) + " Lakh ";
+      if (thousand) str += toWords(thousand) + " Thousand ";
+      if (hundred) str += a[hundred] + " Hundred ";
+      if (num) str += (str ? "and " : "") + units(num) + " ";
+      return str.trim();
+    };
+    const whole = Math.floor(amount);
+    const paise = Math.round((amount - whole) * 100);
+    let words = toWords(whole) + " Rupees";
+    if (paise) words += " and " + toWords(paise) + " Paise";
+    return words + " Only";
+  };
+
+  const addLineItem = () => {
+    const newId = Date.now().toString();
+    setLineItems([
+      ...lineItems,
+      {
+        id: newId,
+        productName: '',
+        hsn: '',
+        quantity: 1,
+        unitPrice: 0,
+        discount: 0,
+        sgstRate: 9,
+        igstRate: 0,
+      },
+    ]);
+  };
 
   const removeLineItem = (id: string) => {
     if (lineItems.length > 1) {
@@ -105,47 +135,47 @@ const addLineItem = () => {
   };
 
   const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
-    setLineItems(lineItems.map(item => 
+    setLineItems(lineItems.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
 
-const calculateLineTotal = (item: LineItem) => {
-  const subtotal = item.quantity * item.unitPrice;
-  const discountAmount = (subtotal * item.discount) / 100;
-  const afterDiscount = subtotal - discountAmount;
-  const sgstAmount = (afterDiscount * item.sgstRate) / 100;
-  const igstAmount = (afterDiscount * item.igstRate) / 100;
-  return afterDiscount + sgstAmount + igstAmount;
-};
-
-const calculateTotalGST = () => {
-  return lineItems.reduce((sum, item) => {
+  const calculateLineTotal = (item: LineItem) => {
     const subtotal = item.quantity * item.unitPrice;
     const discountAmount = (subtotal * item.discount) / 100;
     const afterDiscount = subtotal - discountAmount;
     const sgstAmount = (afterDiscount * item.sgstRate) / 100;
     const igstAmount = (afterDiscount * item.igstRate) / 100;
-    return sum + sgstAmount + igstAmount;
-  }, 0);
-};
-const calculateSubtotal = () => {
-  return lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-};
-const calculateTotalItemDiscount = () => {
-  return lineItems.reduce((sum, item) => {
-    const subtotal = item.quantity * item.unitPrice;
-    return sum + (subtotal * item.discount) / 100;
-  }, 0);
-};
+    return afterDiscount + sgstAmount + igstAmount;
+  };
+
+  const calculateTotalGST = () => {
+    return lineItems.reduce((sum, item) => {
+      const subtotal = item.quantity * item.unitPrice;
+      const discountAmount = (subtotal * item.discount) / 100;
+      const afterDiscount = subtotal - discountAmount;
+      const sgstAmount = (afterDiscount * item.sgstRate) / 100;
+      const igstAmount = (afterDiscount * item.igstRate) / 100;
+      return sum + sgstAmount + igstAmount;
+    }, 0);
+  };
+  const calculateSubtotal = () => {
+    return lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  };
+  const calculateTotalItemDiscount = () => {
+    return lineItems.reduce((sum, item) => {
+      const subtotal = item.quantity * item.unitPrice;
+      return sum + (subtotal * item.discount) / 100;
+    }, 0);
+  };
 
 
- const calculateFinalTotal = () => {
-  const subtotal = calculateSubtotal();
-  const itemDiscounts = calculateTotalItemDiscount();
-  const gstAmount = calculateTotalGST(); // SGST + IGST
-  return subtotal - itemDiscounts + gstAmount;
-};
+  const calculateFinalTotal = () => {
+    const subtotal = calculateSubtotal();
+    const itemDiscounts = calculateTotalItemDiscount();
+    const gstAmount = calculateTotalGST(); // SGST + IGST
+    return subtotal - itemDiscounts + gstAmount;
+  };
 
   const handlePrint = () => {
     // Add print-specific styles
@@ -173,12 +203,12 @@ const calculateTotalItemDiscount = () => {
         }
       </style>
     `;
-    
+
     const originalStyles = document.head.innerHTML;
     document.head.innerHTML += printStyles;
-    
+
     window.print();
-    
+
     // Clean up styles after printing
     setTimeout(() => {
       document.head.innerHTML = originalStyles;
@@ -224,7 +254,7 @@ const calculateTotalItemDiscount = () => {
                   <Input
                     id="invoiceNumber"
                     value={invoiceDetails.invoiceNumber}
-                    onChange={(e) => setInvoiceDetails({...invoiceDetails, invoiceNumber: e.target.value})}
+                    onChange={(e) => setInvoiceDetails({ ...invoiceDetails, invoiceNumber: e.target.value })}
                     placeholder="INV-001"
                   />
                 </div>
@@ -234,7 +264,7 @@ const calculateTotalItemDiscount = () => {
                     id="date"
                     type="date"
                     value={invoiceDetails.date}
-                    onChange={(e) => setInvoiceDetails({...invoiceDetails, date: e.target.value})}
+                    onChange={(e) => setInvoiceDetails({ ...invoiceDetails, date: e.target.value })}
                   />
                 </div>
                 <div>
@@ -243,16 +273,16 @@ const calculateTotalItemDiscount = () => {
                     id="dueDate"
                     type="date"
                     value={invoiceDetails.dueDate}
-                    onChange={(e) => setInvoiceDetails({...invoiceDetails, dueDate: e.target.value})}
+                    onChange={(e) => setInvoiceDetails({ ...invoiceDetails, dueDate: e.target.value })}
                   />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Customer Info */}
+            {/* Customer Info (Bill To) */}
             <Card>
               <CardHeader>
-                <CardTitle>Customer Information</CardTitle>
+                <CardTitle>Bill To</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -260,7 +290,7 @@ const calculateTotalItemDiscount = () => {
                   <Input
                     id="customerName"
                     value={customerInfo.name}
-                    onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                     placeholder="John Doe"
                   />
                 </div>
@@ -269,7 +299,7 @@ const calculateTotalItemDiscount = () => {
                   <Textarea
                     id="customerAddress"
                     value={customerInfo.address}
-                    onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
                     placeholder="123 Main St, City, State, ZIP"
                     rows={3}
                   />
@@ -279,7 +309,7 @@ const calculateTotalItemDiscount = () => {
                   <Input
                     id="customerPhone"
                     value={customerInfo.phone}
-                    onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
@@ -289,57 +319,110 @@ const calculateTotalItemDiscount = () => {
                     id="customerEmail"
                     type="email"
                     value={customerInfo.email}
-                    onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                     placeholder="john@example.com"
                   />
                 </div>
               </CardContent>
             </Card>
 
+            {/* Shipping Info (Ship To) */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Ship To</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="sameAsBilling"
+                      checked={sameAsBilling}
+                      onCheckedChange={(checked) => setSameAsBilling(Boolean(checked))}
+                    />
+                    <Label htmlFor="sameAsBilling" className="cursor-pointer">Same as Bill To</Label>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="shipName">Recipient Name</Label>
+                  <Input
+                    id="shipName"
+                    value={shippingInfo.name}
+                    onChange={(e) => setShippingInfo({ ...shippingInfo, name: e.target.value })}
+                    placeholder="Recipient"
+                    disabled={sameAsBilling}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shipAddress">Address</Label>
+                  <Textarea
+                    id="shipAddress"
+                    value={shippingInfo.address}
+                    onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
+                    placeholder="Delivery address"
+                    rows={3}
+                    disabled={sameAsBilling}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shipPhone">Phone</Label>
+                  <Input
+                    id="shipPhone"
+                    value={shippingInfo.phone}
+                    onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
+                    placeholder="+1 (555) 987-6543"
+                    disabled={sameAsBilling}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shipEmail">Email</Label>
+                  <Input
+                    id="shipEmail"
+                    type="email"
+                    value={shippingInfo.email}
+                    onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
+                    placeholder="recipient@example.com"
+                    disabled={sameAsBilling}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Side - Bill Preview */}
           <div className="lg:col-span-2">
             <Card className="shadow-lg">
               <CardContent className="p-8 invoice-content">
-                {/* Bill Header */}
-                <div className="flex flex-col gap-4 mb-8">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-4">
-                      <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-16 h-16" />
-                      <div>
-                        <h1 className="text-2xl font-bold text-invoice-header">Flyshaft</h1>
-                        <p className="text-invoice-text">Professional Services</p>
-                      </div>
+                {/* Header: left logo + company info (small), right invoice details */}
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-16 h-16" />
+                    <div className="mt-2 text-xs text-invoice-text space-y-1">
+                      <p className="font-medium">Flyshaft Technologies</p>
+                      <p>123 Tech Park, Electronic City, Bangalore, Karnataka - 560100</p>
+                      <p>Phone: +91 80 1234 5678</p>
+                      <p>GST No: 29ABCDE1234F1Z5</p>
                     </div>
-                    <div className="text-right">
-                      <h2 className="text-2xl font-bold text-invoice-header mb-2">INVOICE</h2>
-                      {invoiceDetails.invoiceNumber && (
-                        <p className="text-invoice-text">#{invoiceDetails.invoiceNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h2 className="text-2xl font-bold text-invoice-header">INVOICE</h2>
+                    {invoiceDetails.invoiceNumber && (
+                      <p className="text-invoice-text mt-1">#{invoiceDetails.invoiceNumber}</p>
+                    )}
+                    <div className="mt-3 text-sm text-invoice-text space-y-1">
+                      {invoiceDetails.date && (
+                        <p><span className="font-medium">Date: </span>{new Date(invoiceDetails.date).toLocaleDateString()}</p>
+                      )}
+                      {invoiceDetails.dueDate && (
+                        <p><span className="font-medium">Due Date: </span>{new Date(invoiceDetails.dueDate).toLocaleDateString()}</p>
                       )}
                     </div>
                   </div>
-                  {/* Dates Row (full width, small) */}
-                  <div className="flex flex-wrap justify-end gap-8 text-sm text-invoice-text">
-                    {invoiceDetails.date && (
-                      <div className="flex gap-2">
-                        <span className="font-medium">Date:</span>
-                        <span>{new Date(invoiceDetails.date).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                    {invoiceDetails.dueDate && (
-                      <div className="flex gap-2">
-                        <span className="font-medium">Due Date:</span>
-                        <span>{new Date(invoiceDetails.dueDate).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                  </div>
                 </div>
 
-                {/* Invoice Details & Customer Info */}
+                {/* Bill To + Ship To row */}
                 <div className="grid md:grid-cols-2 gap-8 mb-8">
                   <div>
-                    <h3 className="font-semibold text-invoice-header mb-3">Bill To:</h3>
+                    <h3 className="font-semibold text-invoice-header mb-3">Bill To</h3>
                     <div className="text-invoice-text space-y-1">
                       {customerInfo.name && <p className="font-medium">{customerInfo.name}</p>}
                       {customerInfo.address && <p className="whitespace-pre-line">{customerInfo.address}</p>}
@@ -348,12 +431,12 @@ const calculateTotalItemDiscount = () => {
                     </div>
                   </div>
                   <div className="md:text-right">
-                    {/* <h3 className="font-semibold text-invoice-header mb-3">Company Details:</h3> */}
+                    <h3 className="font-semibold text-invoice-header mb-3">Ship To</h3>
                     <div className="text-invoice-text space-y-1">
-                      <p className="font-medium">Flyshaft Technologies</p>
-                      <p>123 Tech Park, Electronic City, Bangalore, Karnataka - 560100</p>
-                      <p>Phone: +91 80 1234 5678</p>
-                      <p>GST No: 29ABCDE1234F1Z5</p>
+                      {shippingInfo.name && <p className="font-medium">{shippingInfo.name}</p>}
+                      {shippingInfo.address && <p className="whitespace-pre-line">{shippingInfo.address}</p>}
+                      {shippingInfo.phone && <p>{shippingInfo.phone}</p>}
+                      {shippingInfo.email && <p>{shippingInfo.email}</p>}
                     </div>
                   </div>
                 </div>
