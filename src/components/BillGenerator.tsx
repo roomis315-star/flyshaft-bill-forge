@@ -10,10 +10,12 @@ import flyshaftLogo from '@/assets/flyshaft-logo.png';
 interface LineItem {
   id: string;
   productName: string;
+  hsn?: string;
   quantity: number;
   unitPrice: number;
   discount: number;
-  gstRate: number;
+  sgstRate: number;
+  igstRate: number;
 }
 
 interface CustomerInfo {
@@ -30,9 +32,9 @@ interface InvoiceDetails {
 }
 
 const BillGenerator = () => {
-  const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', productName: '', quantity: 1, unitPrice: 0, discount: 0, gstRate: 18 }
-  ]);
+ const [lineItems, setLineItems] = useState<LineItem[]>([
+  { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, igstRate: 9 }
+]);
   
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
@@ -48,65 +50,53 @@ const BillGenerator = () => {
   });
 
   // Amount in words conversion
-  const convertToWords = (amount: number): string => {
-    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-    
-    const convertHundreds = (num: number): string => {
-      let result = '';
-      if (num >= 100) {
-        result += ones[Math.floor(num / 100)] + ' Hundred ';
-        num %= 100;
-      }
-      if (num >= 20) {
-        result += tens[Math.floor(num / 10)] + ' ';
-        num %= 10;
-      } else if (num >= 10) {
-        result += teens[num - 10] + ' ';
-        return result;
-      }
-      if (num > 0) {
-        result += ones[num] + ' ';
-      }
-      return result;
-    };
-
-    if (amount === 0) return 'Zero';
-    
-    const integerPart = Math.floor(amount);
-    let result = '';
-    
-    if (integerPart >= 10000000) {
-      result += convertHundreds(Math.floor(integerPart / 10000000)) + 'Crore ';
-      amount %= 10000000;
-    }
-    if (integerPart >= 100000) {
-      result += convertHundreds(Math.floor(integerPart / 100000)) + 'Lakh ';
-      amount %= 100000;
-    }
-    if (integerPart >= 1000) {
-      result += convertHundreds(Math.floor(integerPart / 1000)) + 'Thousand ';
-      amount %= 1000;
-    }
-    if (integerPart > 0) {
-      result += convertHundreds(integerPart);
-    }
-    
-    return result.trim() + ' only';
+const convertToWords = (amount: number): string => {
+  if (isNaN(amount)) return "";
+  const a = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+  const b = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+  const units = (n: number) => {
+    if (n < 20) return a[n];
+    const t = Math.floor(n / 10), r = n % 10;
+    return b[t] + (r ? " " + a[r] : "");
   };
+  const toWords = (n: number): string => {
+    if (n === 0) return "Zero";
+    let str = "";
+    let num = n;
+    const crore = Math.floor(num / 10000000); num %= 10000000;
+    const lakh = Math.floor(num / 100000); num %= 100000;
+    const thousand = Math.floor(num / 1000); num %= 1000;
+    const hundred = Math.floor(num / 100); num %= 100;
+    if (crore) str += toWords(crore) + " Crore ";
+    if (lakh) str += toWords(lakh) + " Lakh ";
+    if (thousand) str += toWords(thousand) + " Thousand ";
+    if (hundred) str += a[hundred] + " Hundred ";
+    if (num) str += (str ? "and " : "") + units(num) + " ";
+    return str.trim();
+  };
+  const whole = Math.floor(amount);
+  const paise = Math.round((amount - whole) * 100);
+  let words = toWords(whole) + " Rupees";
+  if (paise) words += " and " + toWords(paise) + " Paise";
+  return words + " Only";
+};
 
-  const addLineItem = () => {
-    const newId = Date.now().toString();
-    setLineItems([...lineItems, {
+const addLineItem = () => {
+  const newId = Date.now().toString();
+  setLineItems([
+    ...lineItems,
+    {
       id: newId,
       productName: '',
+      hsn: '',
       quantity: 1,
       unitPrice: 0,
       discount: 0,
-      gstRate: 18
-    }]);
-  };
+      sgstRate: 9,
+      igstRate: 0,
+    },
+  ]);
+};
 
   const removeLineItem = (id: string) => {
     if (lineItems.length > 1) {
@@ -120,42 +110,42 @@ const BillGenerator = () => {
     ));
   };
 
-  const calculateLineTotal = (item: LineItem) => {
+const calculateLineTotal = (item: LineItem) => {
+  const subtotal = item.quantity * item.unitPrice;
+  const discountAmount = (subtotal * item.discount) / 100;
+  const afterDiscount = subtotal - discountAmount;
+  const sgstAmount = (afterDiscount * item.sgstRate) / 100;
+  const igstAmount = (afterDiscount * item.igstRate) / 100;
+  return afterDiscount + sgstAmount + igstAmount;
+};
+
+const calculateTotalGST = () => {
+  return lineItems.reduce((sum, item) => {
     const subtotal = item.quantity * item.unitPrice;
     const discountAmount = (subtotal * item.discount) / 100;
     const afterDiscount = subtotal - discountAmount;
-    const gstAmount = (afterDiscount * item.gstRate) / 100;
-    return afterDiscount + gstAmount;
-  };
+    const sgstAmount = (afterDiscount * item.sgstRate) / 100;
+    const igstAmount = (afterDiscount * item.igstRate) / 100;
+    return sum + sgstAmount + igstAmount;
+  }, 0);
+};
+const calculateSubtotal = () => {
+  return lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+};
+const calculateTotalItemDiscount = () => {
+  return lineItems.reduce((sum, item) => {
+    const subtotal = item.quantity * item.unitPrice;
+    return sum + (subtotal * item.discount) / 100;
+  }, 0);
+};
 
-  const calculateSubtotal = () => {
-    return lineItems.reduce((sum, item) => {
-      return sum + (item.quantity * item.unitPrice);
-    }, 0);
-  };
 
-  const calculateTotalItemDiscount = () => {
-    return lineItems.reduce((sum, item) => {
-      const subtotal = item.quantity * item.unitPrice;
-      return sum + ((subtotal * item.discount) / 100);
-    }, 0);
-  };
-
-  const calculateTotalGST = () => {
-    return lineItems.reduce((sum, item) => {
-      const subtotal = item.quantity * item.unitPrice;
-      const discountAmount = (subtotal * item.discount) / 100;
-      const afterDiscount = subtotal - discountAmount;
-      return sum + ((afterDiscount * item.gstRate) / 100);
-    }, 0);
-  };
-
-  const calculateFinalTotal = () => {
-    const subtotal = calculateSubtotal();
-    const itemDiscounts = calculateTotalItemDiscount();
-    const gstAmount = calculateTotalGST();
-    return subtotal - itemDiscounts + gstAmount;
-  };
+ const calculateFinalTotal = () => {
+  const subtotal = calculateSubtotal();
+  const itemDiscounts = calculateTotalItemDiscount();
+  const gstAmount = calculateTotalGST(); // SGST + IGST
+  return subtotal - itemDiscounts + gstAmount;
+};
 
   const handlePrint = () => {
     // Add print-specific styles
@@ -313,24 +303,41 @@ const BillGenerator = () => {
             <Card className="shadow-lg">
               <CardContent className="p-8 invoice-content">
                 {/* Bill Header */}
-                <div className="flex justify-between items-start mb-8">
-                  <div className="flex items-center space-x-4">
-                    <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-16 h-16" />
-                    <div>
-                      <h1 className="text-2xl font-bold text-invoice-header">Flyshaft</h1>
-                      <p className="text-invoice-text">Professional Services</p>
+                <div className="flex flex-col gap-4 mb-8">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-4">
+                      <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-16 h-16" />
+                      <div>
+                        <h1 className="text-2xl font-bold text-invoice-header">Flyshaft</h1>
+                        <p className="text-invoice-text">Professional Services</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <h2 className="text-2xl font-bold text-invoice-header mb-2">INVOICE</h2>
+                      {invoiceDetails.invoiceNumber && (
+                        <p className="text-invoice-text">#{invoiceDetails.invoiceNumber}</p>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <h2 className="text-2xl font-bold text-invoice-header mb-2">INVOICE</h2>
-                    {invoiceDetails.invoiceNumber && (
-                      <p className="text-invoice-text">#{invoiceDetails.invoiceNumber}</p>
+                  {/* Dates Row (full width, small) */}
+                  <div className="flex flex-wrap justify-end gap-8 text-sm text-invoice-text">
+                    {invoiceDetails.date && (
+                      <div className="flex gap-2">
+                        <span className="font-medium">Date:</span>
+                        <span>{new Date(invoiceDetails.date).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {invoiceDetails.dueDate && (
+                      <div className="flex gap-2">
+                        <span className="font-medium">Due Date:</span>
+                        <span>{new Date(invoiceDetails.dueDate).toLocaleDateString()}</span>
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {/* Invoice Details & Customer Info */}
-                <div className="grid md:grid-cols-3 gap-8 mb-8">
+                <div className="grid md:grid-cols-2 gap-8 mb-8">
                   <div>
                     <h3 className="font-semibold text-invoice-header mb-3">Bill To:</h3>
                     <div className="text-invoice-text space-y-1">
@@ -340,32 +347,13 @@ const BillGenerator = () => {
                       {customerInfo.email && <p>{customerInfo.email}</p>}
                     </div>
                   </div>
-                  
-                  <div>
-                    <h3 className="font-semibold text-invoice-header mb-3">Company Details:</h3>
+                  <div className="md:text-right">
+                    {/* <h3 className="font-semibold text-invoice-header mb-3">Company Details:</h3> */}
                     <div className="text-invoice-text space-y-1">
                       <p className="font-medium">Flyshaft Technologies</p>
-                      <p>123 Tech Park, Electronic City</p>
-                      <p>Bangalore, Karnataka - 560100</p>
+                      <p>123 Tech Park, Electronic City, Bangalore, Karnataka - 560100</p>
                       <p>Phone: +91 80 1234 5678</p>
                       <p>GST No: 29ABCDE1234F1Z5</p>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="space-y-2 text-invoice-text">
-                      {invoiceDetails.date && (
-                        <div className="flex justify-end">
-                          <span className="w-20 text-left">Date:</span>
-                          <span className="font-medium">{new Date(invoiceDetails.date).toLocaleDateString()}</span>
-                        </div>
-                      )}
-                      {invoiceDetails.dueDate && (
-                        <div className="flex justify-end">
-                          <span className="w-20 text-left">Due Date:</span>
-                          <span className="font-medium">{new Date(invoiceDetails.dueDate).toLocaleDateString()}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -377,11 +365,13 @@ const BillGenerator = () => {
                       <thead>
                         <tr className="border-b-2 border-border">
                           <th className="text-left py-3 px-2 font-semibold text-invoice-header">Product/Service</th>
+                          <th className="text-left py-3 px-2 font-semibold text-invoice-header">HSN</th>
                           <th className="text-center py-3 px-2 font-semibold text-invoice-header">Qty</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Unit Price</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Discount</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">GST</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Total</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Rate (₹)</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Discount %</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">SGST %</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">IGST %</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Line Total (₹)</th>
                           <th className="w-12 print:hidden"></th>
                         </tr>
                       </thead>
@@ -392,10 +382,19 @@ const BillGenerator = () => {
                               <Input
                                 value={item.productName}
                                 onChange={(e) => updateLineItem(item.id, 'productName', e.target.value)}
-                                placeholder="Product name"
+                                placeholder="Product / Service"
                                 className="border-0 bg-transparent p-0 focus-visible:ring-0 print:hidden"
                               />
                               <span className="hidden print:block text-invoice-text">{item.productName}</span>
+                            </td>
+                            <td className="py-3 px-2">
+                              <Input
+                                value={item.hsn}
+                                onChange={(e) => updateLineItem(item.id, 'hsn', e.target.value)}
+                                placeholder="HSN"
+                                className="border-0 bg-transparent p-0 focus-visible:ring-0 print:hidden"
+                              />
+                              <span className="hidden print:block text-invoice-text">{item.hsn}</span>
                             </td>
                             <td className="py-3 px-2 text-center">
                               <Input
@@ -436,14 +435,27 @@ const BillGenerator = () => {
                             <td className="py-3 px-2 text-right">
                               <Input
                                 type="number"
-                                value={item.gstRate}
-                                onChange={(e) => updateLineItem(item.id, 'gstRate', Number(e.target.value))}
+                                value={item.sgstRate}
+                                onChange={(e) => updateLineItem(item.id, 'sgstRate', Number(e.target.value))}
                                 className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
                                 min="0"
                                 max="100"
                               />
                               <span className="hidden print:block text-invoice-text">
-                                {item.gstRate > 0 ? `${item.gstRate}%` : ''}
+                                {item.sgstRate > 0 ? `${item.sgstRate}%` : ''}
+                              </span>
+                            </td>
+                            <td className="py-3 px-2 text-right">
+                              <Input
+                                type="number"
+                                value={item.igstRate}
+                                onChange={(e) => updateLineItem(item.id, 'igstRate', Number(e.target.value))}
+                                className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                                min="0"
+                                max="100"
+                              />
+                              <span className="hidden print:block text-invoice-text">
+                                {item.igstRate > 0 ? `${item.igstRate}%` : ''}
                               </span>
                             </td>
                             <td className="py-3 px-2 text-right font-medium text-invoice-text">
@@ -465,10 +477,10 @@ const BillGenerator = () => {
                       </tbody>
                     </table>
                   </div>
-                  
-                  <Button 
-                    onClick={addLineItem} 
-                    variant="outline" 
+
+                  <Button
+                    onClick={addLineItem}
+                    variant="outline"
                     className="mt-4 print:hidden"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -483,31 +495,31 @@ const BillGenerator = () => {
                       <span>Subtotal:</span>
                       <span>₹{calculateSubtotal().toFixed(2)}</span>
                     </div>
-                    
                     {calculateTotalItemDiscount() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
                         <span>Item Discounts:</span>
                         <span>-₹{calculateTotalItemDiscount().toFixed(2)}</span>
                       </div>
                     )}
-                    
-                    
                     {calculateTotalGST() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
-                        <span>GST:</span>
+                        <span>GST (SGST + IGST):</span>
                         <span>₹{calculateTotalGST().toFixed(2)}</span>
                       </div>
                     )}
-                    
                     <div className="flex justify-between py-3 border-t-2 border-border font-bold text-lg text-invoice-header">
                       <span>Total:</span>
                       <span className="text-success">₹{calculateFinalTotal().toFixed(2)}</span>
+                    </div>
+                    <div className="text-sm italic text-invoice-text">
+                      Amount in words: {convertToWords(calculateFinalTotal())}
                     </div>
                   </div>
                 </div>
 
                 {/* Footer */}
                 <div className="mt-12 pt-8 border-t border-border text-center text-sm text-invoice-light">
+                  <p>Computer generated Invoice</p>
                   <p>Thank you for your business!</p>
                 </div>
               </CardContent>
