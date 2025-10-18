@@ -178,41 +178,39 @@ const BillGenerator = () => {
   };
 
   const handlePrint = () => {
-    // Add print-specific styles
-    const printStyles = `
-      <style>
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .invoice-content, .invoice-content * {
-            visibility: visible;
-          }
-          .invoice-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-          .hidden.print\\:block {
-            display: block !important;
-          }
+    // Inject minimal print styles and isolate invoice
+    const styleEl = document.createElement('style');
+    styleEl.id = 'print-style';
+    styleEl.textContent = `
+      @media print {
+        body * { visibility: hidden; }
+        .invoice-content, .invoice-content * { visibility: visible; }
+        .invoice-content {
+          position: absolute;
+          left: 0; top: 0;
+          width: 100%;
         }
-      </style>
+        .print\\:hidden { display: none !important; }
+        .hidden.print\\:block { display: block !important; }
+      }
+      @page {
+        margin: 12mm 10mm;
+      }
     `;
+    document.head.appendChild(styleEl);
 
-    const originalStyles = document.head.innerHTML;
-    document.head.innerHTML += printStyles;
+    const originalTitle = document.title;
+    document.title = invoiceDetails.invoiceNumber
+      ? `Invoice ${invoiceDetails.invoiceNumber}`
+      : 'Invoice';
 
     window.print();
 
     // Clean up styles after printing
     setTimeout(() => {
-      document.head.innerHTML = originalStyles;
-    }, 1000);
+      document.title = originalTitle;
+      styleEl.remove();
+    }, 500);
   };
 
   return (
