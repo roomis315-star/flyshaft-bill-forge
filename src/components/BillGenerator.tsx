@@ -195,8 +195,27 @@ const BillGenerator = () => {
           left: 0; top: 0;
           width: 100%;
         }
-        .print\\:hidden { display: none !important; }
-        .hidden.print\\:block { display: block !important; }
+        .print\:hidden { display: none !important; }
+        .hidden.print\:block { display: block !important; }
+        /* Ensure bill to and ship to appear side by side */
+        .grid.md\:grid-cols-2 { 
+          display: grid !important; 
+          grid-template-columns: 1fr 1fr !important; 
+          gap: 2rem !important; 
+        }
+        .md\:text-right { text-align: right !important; }
+        /* Force column layout for bill/shipping info */
+        div[class*='grid'] div[class*='gap-8'] { 
+          display: grid !important; 
+          grid-template-columns: 1fr 1fr !important; 
+          gap: 2rem !important; 
+        }
+        /* Specific selector for the bill/shipping container */
+        .bill-shipping-container { 
+          display: grid !important; 
+          grid-template-columns: 1fr 1fr !important; 
+          gap: 2rem !important; 
+        }
       }
       @page {
         margin: 12mm 10mm;
@@ -424,7 +443,7 @@ const BillGenerator = () => {
                 </div>
 
                 {/* Bill To + Ship To row */}
-                <div className="grid md:grid-cols-2 gap-8 mb-8">
+                <div className="grid md:grid-cols-2 gap-8 mb-8 bill-shipping-container">
                   <div>
                     <h3 className="font-semibold text-invoice-header mb-3">Bill To</h3>
                     <div className="text-invoice-text space-y-1">
