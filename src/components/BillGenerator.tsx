@@ -17,6 +17,7 @@ interface LineItem {
   unitPrice: number;
   discount: number;
   sgstRate: number;
+  cgstRate: number;
   igstRate: number;
 }
 
@@ -50,8 +51,9 @@ interface InvoiceDetails {
 
 const BillGenerator = () => {
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, igstRate: 9 }
+    { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, cgstRate: 9, igstRate: 0 }
   ]);
+  const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
 
 
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -123,6 +125,7 @@ const BillGenerator = () => {
         unitPrice: 0,
         discount: 0,
         sgstRate: 9,
+        cgstRate: 9,
         igstRate: 0,
       },
     ]);
@@ -145,8 +148,9 @@ const BillGenerator = () => {
     const discountAmount = (subtotal * item.discount) / 100;
     const afterDiscount = subtotal - discountAmount;
     const sgstAmount = (afterDiscount * item.sgstRate) / 100;
+    const cgstAmount = (afterDiscount * item.cgstRate) / 100;
     const igstAmount = (afterDiscount * item.igstRate) / 100;
-    return afterDiscount + sgstAmount + igstAmount;
+    return afterDiscount + sgstAmount + cgstAmount + igstAmount;
   };
 
   const calculateTotalGST = () => {
@@ -155,8 +159,9 @@ const BillGenerator = () => {
       const discountAmount = (subtotal * item.discount) / 100;
       const afterDiscount = subtotal - discountAmount;
       const sgstAmount = (afterDiscount * item.sgstRate) / 100;
+      const cgstAmount = (afterDiscount * item.cgstRate) / 100;
       const igstAmount = (afterDiscount * item.igstRate) / 100;
-      return sum + sgstAmount + igstAmount;
+      return sum + sgstAmount + cgstAmount + igstAmount;
     }, 0);
   };
   const calculateSubtotal = () => {
@@ -173,8 +178,8 @@ const BillGenerator = () => {
   const calculateFinalTotal = () => {
     const subtotal = calculateSubtotal();
     const itemDiscounts = calculateTotalItemDiscount();
-    const gstAmount = calculateTotalGST(); // SGST + IGST
-    return subtotal - itemDiscounts + gstAmount;
+    const gstAmount = calculateTotalGST(); // SGST + CGST + IGST
+    return subtotal - itemDiscounts + gstAmount + deliveryCharge;
   };
 
   const handlePrint = () => {
@@ -235,7 +240,7 @@ const BillGenerator = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-24 h-24 mx-auto mb-2" />
+                  <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-34 h-24 mx-auto mb-2" />
                   <h2 className="text-xl font-semibold">Flyshaft</h2>
                 </div>
               </CardContent>
@@ -393,7 +398,7 @@ const BillGenerator = () => {
                 {/* Header: left logo + company info (small), right invoice details */}
                 <div className="flex justify-between items-start mb-8">
                   <div>
-                    <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-16 h-16" />
+                    <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-26 h-16" />
                     <div className="mt-2 text-xs text-invoice-text space-y-1">
                       <p className="font-medium">Flyshaft Technologies</p>
                       <p>Mohlla Sarawagi, Tikait Nagar, Barabanki, Uttar Pradesh - 201002</p>
@@ -451,6 +456,7 @@ const BillGenerator = () => {
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Rate (₹)</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Discount %</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">SGST %</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">CGST %</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">IGST %</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Line Total (₹)</th>
                           <th className="w-12 print:hidden"></th>
@@ -529,6 +535,19 @@ const BillGenerator = () => {
                             <td className="py-3 px-2 text-right">
                               <Input
                                 type="number"
+                                value={item.cgstRate}
+                                onChange={(e) => updateLineItem(item.id, 'cgstRate', Number(e.target.value))}
+                                className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                                min="0"
+                                max="100"
+                              />
+                              <span className="hidden print:block text-invoice-text">
+                                {item.cgstRate > 0 ? `${item.cgstRate}%` : ''}
+                              </span>
+                            </td>
+                            <td className="py-3 px-2 text-right">
+                              <Input
+                                type="number"
                                 value={item.igstRate}
                                 onChange={(e) => updateLineItem(item.id, 'igstRate', Number(e.target.value))}
                                 className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
@@ -584,10 +603,27 @@ const BillGenerator = () => {
                     )}
                     {calculateTotalGST() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
-                        <span>GST (SGST + IGST):</span>
+                        <span>GST (SGST + CGST + IGST):</span>
                         <span>₹{calculateTotalGST().toFixed(2)}</span>
                       </div>
                     )}
+                    <div className="flex justify-between py-2 text-invoice-text">
+                      <span>Delivery Charge:</span>
+                      <div className="flex items-center">
+                        <span className="mr-2">₹</span>
+                        <Input
+                          type="number"
+                          value={deliveryCharge}
+                          onChange={(e) => setDeliveryCharge(Number(e.target.value))}
+                          className="w-24 border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                          min="0"
+                          step="0.01"
+                        />
+                        <span className="hidden print:block text-invoice-text">
+                          {deliveryCharge > 0 ? deliveryCharge.toFixed(2) : '0.00'}
+                        </span>
+                      </div>
+                    </div>
                     <div className="flex justify-between py-3 border-t-2 border-border font-bold text-lg text-invoice-header">
                       <span>Total:</span>
                       <span className="text-success">₹{calculateFinalTotal().toFixed(2)}</span>
