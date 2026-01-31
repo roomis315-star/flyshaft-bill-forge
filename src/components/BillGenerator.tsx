@@ -401,8 +401,8 @@ const BillGenerator = () => {
                     <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-26 h-16" />
                     <div className="mt-2 text-xs text-invoice-text space-y-1">
                       <p className="font-medium">Flyshaft Technologies</p>
-                      <p>Mohlla Sarawagi, Tikait Nagar, Barabanki, Uttar Pradesh - 201002</p>
-                      <p>Phone: +91 80 1234 5678</p>
+                      <p>Sarawagi, Tikait Nagar, Barabanki, Siraul Gaus Pur  Uttar Pradesh - 225415</p>
+                      <p>Phone: +91 8858927811</p>
                       <p>GST No: 29ABCDE1234F1Z5</p>
                     </div>
                   </div>
