@@ -401,7 +401,8 @@ const BillGenerator = () => {
                     <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-26 h-16" />
                     <div className="mt-2 text-xs text-invoice-text space-y-1">
                       <p className="font-medium">Flyshaft Technologies</p>
-                      <p>Sarawagi, Tikait Nagar, Barabanki, Siraul Gaus Pur  Uttar Pradesh - 225415</p>
+                      <p>Sarawagi, Tikait Nagar, Siraul Gaus Pur, Barabanki</p>
+                      <p>Uttar Pradesh - 225415</p>
                       <p>Phone: +91 8858927811</p>
                       <p>GST No: 29ABCDE1234F1Z5</p>
                     </div>
@@ -451,7 +452,7 @@ const BillGenerator = () => {
                       <thead>
                         <tr className="border-b-2 border-border">
                           <th className="text-left py-3 px-2 font-semibold text-invoice-header">Product/Service</th>
-                          <th className="text-left py-3 px-2 font-semibold text-invoice-header">HSN</th>
+                          <th className="text-left py-3 px-2 font-semibold text-invoice-header">HSN/SAC</th>
                           <th className="text-center py-3 px-2 font-semibold text-invoice-header">Qty</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Rate (₹)</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Discount %</th>
