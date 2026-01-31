@@ -478,7 +478,7 @@ const BillGenerator = () => {
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">SGST %</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">CGST %</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">IGST %</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Line Total (₹)</th>
+                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">Total (₹)</th>
                           <th className="w-12 print:hidden"></th>
                         </tr>
                       </thead>
