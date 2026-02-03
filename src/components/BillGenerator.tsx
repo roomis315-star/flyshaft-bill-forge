@@ -26,6 +26,7 @@ interface CustomerInfo {
   address: string;
   phone: string;
   email: string;
+  gstNumber?: string;
 }
 
 interface InvoiceDetails {
@@ -51,9 +52,10 @@ interface InvoiceDetails {
 
 const BillGenerator = () => {
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, cgstRate: 9, igstRate: 0 }
+    { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, cgstRate: 9, igstRate: 18 }
   ]);
   const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
+  const [isInterState, setIsInterState] = useState<boolean>(false);
 
 
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -126,7 +128,7 @@ const BillGenerator = () => {
         discount: 0,
         sgstRate: 9,
         cgstRate: 9,
-        igstRate: 0,
+        igstRate: 18,
       },
     ]);
   };
@@ -147,10 +149,17 @@ const BillGenerator = () => {
     const subtotal = item.quantity * item.unitPrice;
     const discountAmount = (subtotal * item.discount) / 100;
     const afterDiscount = subtotal - discountAmount;
-    const sgstAmount = (afterDiscount * item.sgstRate) / 100;
-    const cgstAmount = (afterDiscount * item.cgstRate) / 100;
-    const igstAmount = (afterDiscount * item.igstRate) / 100;
-    return afterDiscount + sgstAmount + cgstAmount + igstAmount;
+    
+    if (isInterState) {
+      // Inter-state: only IGST
+      const igstAmount = (afterDiscount * item.igstRate) / 100;
+      return afterDiscount + igstAmount;
+    } else {
+      // Within state: CGST + SGST
+      const sgstAmount = (afterDiscount * item.sgstRate) / 100;
+      const cgstAmount = (afterDiscount * item.cgstRate) / 100;
+      return afterDiscount + sgstAmount + cgstAmount;
+    }
   };
 
   const calculateTotalGST = () => {
@@ -158,10 +167,17 @@ const BillGenerator = () => {
       const subtotal = item.quantity * item.unitPrice;
       const discountAmount = (subtotal * item.discount) / 100;
       const afterDiscount = subtotal - discountAmount;
-      const sgstAmount = (afterDiscount * item.sgstRate) / 100;
-      const cgstAmount = (afterDiscount * item.cgstRate) / 100;
-      const igstAmount = (afterDiscount * item.igstRate) / 100;
-      return sum + sgstAmount + cgstAmount + igstAmount;
+      
+      if (isInterState) {
+        // Inter-state: only IGST
+        const igstAmount = (afterDiscount * item.igstRate) / 100;
+        return sum + igstAmount;
+      } else {
+        // Within state: CGST + SGST
+        const sgstAmount = (afterDiscount * item.sgstRate) / 100;
+        const cgstAmount = (afterDiscount * item.cgstRate) / 100;
+        return sum + sgstAmount + cgstAmount;
+      }
     }, 0);
   };
   const calculateSubtotal = () => {
@@ -178,7 +194,7 @@ const BillGenerator = () => {
   const calculateFinalTotal = () => {
     const subtotal = calculateSubtotal();
     const itemDiscounts = calculateTotalItemDiscount();
-    const gstAmount = calculateTotalGST(); // SGST + CGST + IGST
+    const gstAmount = calculateTotalGST();
     return subtotal - itemDiscounts + gstAmount + deliveryCharge;
   };
 
@@ -298,6 +314,33 @@ const BillGenerator = () => {
                     onChange={(e) => setInvoiceDetails({ ...invoiceDetails, dueDate: e.target.value })}
                   />
                 </div>
+                <div>
+                  <Label className="block mb-2">Transaction Type</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="sameState"
+                        name="transactionType"
+                        checked={!isInterState}
+                        onChange={() => setIsInterState(false)}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <Label htmlFor="sameState" className="cursor-pointer">Within State (CGST + SGST)</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="interState"
+                        name="transactionType"
+                        checked={isInterState}
+                        onChange={() => setIsInterState(true)}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <Label htmlFor="interState" className="cursor-pointer">Inter-State (IGST)</Label>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -343,6 +386,15 @@ const BillGenerator = () => {
                     value={customerInfo.email}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                     placeholder="john@example.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customerGst">GST Number (B2B)</Label>
+                  <Input
+                    id="customerGst"
+                    value={customerInfo.gstNumber || ''}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, gstNumber: e.target.value })}
+                    placeholder="22AAAAA0000A1Z5"
                   />
                 </div>
               </CardContent>
@@ -420,8 +472,10 @@ const BillGenerator = () => {
                     <img src={flyshaftLogo} alt="Flyshaft Logo" className="w-26 h-16" />
                     <div className="mt-2 text-xs text-invoice-text space-y-1">
                       <p className="font-medium">Flyshaft Technologies</p>
-                      <p>Sarawagi, Tikait Nagar, Siraul Gaus Pur, Barabanki</p>
-                      <p>Uttar Pradesh - 225415</p>
+                      <p>Sarawagi, Tikait Nagar, Siraul Gauspur</p>
+                      <p>Barabanki-225415</p>
+                      <p>Uttar Pradesh UP</p>
+                      <p>India</p>
                       <p>Phone: +91 8858927811</p>
                       <p>GST No: 29ABCDE1234F1Z5</p>
                     </div>
@@ -451,6 +505,7 @@ const BillGenerator = () => {
                       {customerInfo.address && <p className="whitespace-pre-line">{customerInfo.address}</p>}
                       {customerInfo.phone && <p>{customerInfo.phone}</p>}
                       {customerInfo.email && <p>{customerInfo.email}</p>}
+                      {customerInfo.gstNumber && <p><span className="font-medium">GST Number:</span> {customerInfo.gstNumber}</p>}
                     </div>
                   </div>
                   <div className="md:text-right">
@@ -470,14 +525,14 @@ const BillGenerator = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b-2 border-border">
-                          <th className="text-left py-3 px-2 font-semibold text-invoice-header">Product/Service</th>
+                          <th className="text-left py-3 px-2 font-semibold text-invoice-header">Goods and Services</th>
                           <th className="text-left py-3 px-2 font-semibold text-invoice-header">HSN/SAC</th>
                           <th className="text-center py-3 px-2 font-semibold text-invoice-header">Qty</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Rate (₹)</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Discount %</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">SGST %</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">CGST %</th>
-                          <th className="text-right py-3 px-2 font-semibold text-invoice-header">IGST %</th>
+                          {!isInterState && <th className="text-right py-3 px-2 font-semibold text-invoice-header">SGST %</th>}
+                          {!isInterState && <th className="text-right py-3 px-2 font-semibold text-invoice-header">CGST %</th>}
+                          {isInterState && <th className="text-right py-3 px-2 font-semibold text-invoice-header">IGST %</th>}
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Total (₹)</th>
                           <th className="w-12 print:hidden"></th>
                         </tr>
@@ -523,7 +578,7 @@ const BillGenerator = () => {
                                 step="0.01"
                               />
                               <span className="hidden print:block text-invoice-text">
-                                {item.unitPrice > 0 ? `₹${item.unitPrice.toFixed(2)}` : ''}
+                                {item.unitPrice > 0 ? `₹ ${item.unitPrice.toFixed(2)}` : ''}
                               </span>
                             </td>
                             <td className="py-3 px-2 text-right">
@@ -539,47 +594,53 @@ const BillGenerator = () => {
                                 {item.discount > 0 ? `${item.discount}%` : ''}
                               </span>
                             </td>
-                            <td className="py-3 px-2 text-right">
-                              <Input
-                                type="number"
-                                value={item.sgstRate}
-                                onChange={(e) => updateLineItem(item.id, 'sgstRate', Number(e.target.value))}
-                                className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
-                                min="0"
-                                max="100"
-                              />
-                              <span className="hidden print:block text-invoice-text">
-                                {item.sgstRate > 0 ? `${item.sgstRate}%` : ''}
-                              </span>
-                            </td>
-                            <td className="py-3 px-2 text-right">
-                              <Input
-                                type="number"
-                                value={item.cgstRate}
-                                onChange={(e) => updateLineItem(item.id, 'cgstRate', Number(e.target.value))}
-                                className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
-                                min="0"
-                                max="100"
-                              />
-                              <span className="hidden print:block text-invoice-text">
-                                {item.cgstRate > 0 ? `${item.cgstRate}%` : ''}
-                              </span>
-                            </td>
-                            <td className="py-3 px-2 text-right">
-                              <Input
-                                type="number"
-                                value={item.igstRate}
-                                onChange={(e) => updateLineItem(item.id, 'igstRate', Number(e.target.value))}
-                                className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
-                                min="0"
-                                max="100"
-                              />
-                              <span className="hidden print:block text-invoice-text">
-                                {item.igstRate > 0 ? `${item.igstRate}%` : ''}
-                              </span>
-                            </td>
+                            {!isInterState && (
+                              <td className="py-3 px-2 text-right">
+                                <Input
+                                  type="number"
+                                  value={item.sgstRate}
+                                  onChange={(e) => updateLineItem(item.id, 'sgstRate', Number(e.target.value))}
+                                  className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                                  min="0"
+                                  max="100"
+                                />
+                                <span className="hidden print:block text-invoice-text">
+                                  {item.sgstRate > 0 ? `${item.sgstRate}%` : ''}
+                                </span>
+                              </td>
+                            )}
+                            {!isInterState && (
+                              <td className="py-3 px-2 text-right">
+                                <Input
+                                  type="number"
+                                  value={item.cgstRate}
+                                  onChange={(e) => updateLineItem(item.id, 'cgstRate', Number(e.target.value))}
+                                  className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                                  min="0"
+                                  max="100"
+                                />
+                                <span className="hidden print:block text-invoice-text">
+                                  {item.cgstRate > 0 ? `${item.cgstRate}%` : ''}
+                                </span>
+                              </td>
+                            )}
+                            {isInterState && (
+                              <td className="py-3 px-2 text-right">
+                                <Input
+                                  type="number"
+                                  value={item.igstRate}
+                                  onChange={(e) => updateLineItem(item.id, 'igstRate', Number(e.target.value))}
+                                  className="border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                                  min="0"
+                                  max="100"
+                                />
+                                <span className="hidden print:block text-invoice-text">
+                                  {item.igstRate > 0 ? `${item.igstRate}%` : ''}
+                                </span>
+                              </td>
+                            )}
                             <td className="py-3 px-2 text-right font-medium text-invoice-text">
-                              ₹{calculateLineTotal(item).toFixed(2)}
+                              ₹ {calculateLineTotal(item).toFixed(2)}
                             </td>
                             <td className="py-3 px-2 print:hidden">
                               <Button
@@ -613,18 +674,18 @@ const BillGenerator = () => {
                   <div className="w-80 space-y-2">
                     <div className="flex justify-between py-2 text-invoice-text">
                       <span>Subtotal:</span>
-                      <span>₹{calculateSubtotal().toFixed(2)}</span>
+                      <span>₹ {calculateSubtotal().toFixed(2)}</span>
                     </div>
                     {calculateTotalItemDiscount() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
                         <span>Item Discounts:</span>
-                        <span>-₹{calculateTotalItemDiscount().toFixed(2)}</span>
+                        <span>-₹ {calculateTotalItemDiscount().toFixed(2)}</span>
                       </div>
                     )}
                     {calculateTotalGST() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
-                        <span>GST (SGST + CGST + IGST):</span>
-                        <span>₹{calculateTotalGST().toFixed(2)}</span>
+                        <span>GST ({isInterState ? 'IGST' : 'SGST + CGST'}):</span>
+                        <span>₹ {calculateTotalGST().toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between py-2 text-invoice-text">
@@ -646,7 +707,7 @@ const BillGenerator = () => {
                     </div>
                     <div className="flex justify-between py-3 border-t-2 border-border font-bold text-lg text-invoice-header">
                       <span>Total:</span>
-                      <span className="text-success">₹{calculateFinalTotal().toFixed(2)}</span>
+                      <span className="text-success">₹ {calculateFinalTotal().toFixed(2)}</span>
                     </div>
                     <div className="text-sm italic text-invoice-text">
                       Amount in words: {convertToWords(calculateFinalTotal())}
