@@ -4,9 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, Printer } from 'lucide-react';
+import { Trash2, Plus, Printer, Download } from 'lucide-react';
 import flyshaftLogo from '@/assets/flyshaft-logo.png';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { sendInvoiceToGoogleSheet, downloadInvoiceAsCSV } from '@/utils/googleSheetsIntegration';
 
 
 interface LineItem {
@@ -56,6 +58,14 @@ const BillGenerator = () => {
   ]);
   const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
   const [isInterState, setIsInterState] = useState<boolean>(false);
+  const [customerType, setCustomerType] = useState<'b2b' | 'b2c'>('b2b');
+  
+  // Derive isB2B from customerType for backward compatibility
+  const isB2B = customerType === 'b2b';
+  
+  // State for export functionality
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState('');
 
 
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -80,7 +90,17 @@ const BillGenerator = () => {
   const [sameAsBilling, setSameAsBilling] = useState<boolean>(true);
 
   useEffect(() => {
-    if (sameAsBilling) setShippingInfo(customerInfo);
+    if (sameAsBilling) {
+      setShippingInfo(customerInfo);
+    } else {
+      // Clear shipping info when unchecked
+      setShippingInfo({
+        name: '',
+        address: '',
+        phone: '',
+        email: ''
+      });
+    }
   }, [customerInfo, sameAsBilling]);
 
   // Amount in words conversion
@@ -211,15 +231,15 @@ const BillGenerator = () => {
           left: 0; top: 0;
           width: 100%;
         }
-        .print\:hidden { display: none !important; }
-        .hidden.print\:block { display: block !important; }
+        .print\\:hidden { display: none !important; }
+        .hidden.print\\:block { display: block !important; }
         /* Ensure bill to and ship to appear side by side */
-        .grid.md\:grid-cols-2 { 
+        .grid.md\\:grid-cols-2 { 
           display: grid !important; 
           grid-template-columns: 1fr 1fr !important; 
           gap: 2rem !important; 
         }
-        .md\:text-right { text-align: right !important; }
+        .md\\:text-right { text-align: right !important; }
         /* Force column layout for bill/shipping info */
         div[class*='grid'] div[class*='gap-8'] { 
           display: grid !important; 
@@ -238,19 +258,98 @@ const BillGenerator = () => {
       }
     `;
     document.head.appendChild(styleEl);
-
+  
     const originalTitle = document.title;
     document.title = invoiceDetails.invoiceNumber
       ? `Invoice ${invoiceDetails.invoiceNumber}`
       : 'Invoice';
-
+  
     window.print();
-
+  
     // Clean up styles after printing
     setTimeout(() => {
       document.title = originalTitle;
       styleEl.remove();
     }, 500);
+  };
+  
+  // Prepare invoice data for export
+  const prepareInvoiceDataForExport = () => {
+    return {
+      invoiceNumber: invoiceDetails.invoiceNumber,
+      date: invoiceDetails.date,
+      dueDate: invoiceDetails.dueDate,
+      customerName: customerInfo.name,
+      customerAddress: customerInfo.address,
+      customerPhone: customerInfo.phone,
+      customerEmail: customerInfo.email,
+      customerGst: customerInfo.gstNumber,
+      shippingName: shippingInfo.name,
+      shippingAddress: shippingInfo.address,
+      shippingPhone: shippingInfo.phone,
+      shippingEmail: shippingInfo.email,
+      subtotal: calculateSubtotal(),
+      totalDiscount: calculateTotalItemDiscount(),
+      totalGst: calculateTotalGST(),
+      deliveryCharge: deliveryCharge,
+      finalTotal: calculateFinalTotal(),
+      customerType: customerType,
+      transactionType: isInterState ? 'inter-state' : 'within-state',
+      lineItems: lineItems.map(item => ({
+        productName: item.productName,
+        hsn: item.hsn || '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+        sgstRate: item.sgstRate,
+        cgstRate: item.cgstRate,
+        igstRate: item.igstRate,
+        total: calculateLineTotal(item)
+      }))
+    };
+  };
+  
+  // Handle export to Google Sheet
+  const handleExportToGoogleSheet = async () => {
+    if (!invoiceDetails.invoiceNumber) {
+      setExportMessage('Please enter an invoice number first');
+      return;
+    }
+  
+    setIsExporting(true);
+    setExportMessage('Exporting to Google Sheet...');
+      
+    try {
+      const invoiceData = prepareInvoiceDataForExport();
+      const result = await sendInvoiceToGoogleSheet(invoiceData);
+        
+      setExportMessage(result.message);
+        
+      if (result.success) {
+        // Clear message after 3 seconds
+        setTimeout(() => setExportMessage(''), 3000);
+      }
+    } catch (error) {
+      setExportMessage('Export failed. Please try again.');
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
+  // Handle CSV download (alternative export method)
+  const handleDownloadCSV = () => {
+    if (!invoiceDetails.invoiceNumber) {
+      setExportMessage('Please enter an invoice number first');
+      return;
+    }
+      
+    const invoiceData = prepareInvoiceDataForExport();
+    const result = downloadInvoiceAsCSV(invoiceData);
+    setExportMessage(result.message);
+      
+    // Clear message after 3 seconds
+    setTimeout(() => setExportMessage(''), 3000);
   };
 
   return (
@@ -259,11 +358,28 @@ const BillGenerator = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-foreground">Bill Generator</h1>
-          <Button onClick={handlePrint} className="print:hidden">
-            <Printer className="w-4 h-4 mr-2" />
-            Print Bill
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleExportToGoogleSheet} disabled={isExporting} className="print:hidden">
+              <Download className="w-4 h-4 mr-2" />
+              {isExporting ? 'Exporting...' : 'Export to Sheet'}
+            </Button>
+            <Button variant="outline" onClick={handleDownloadCSV} className="print:hidden">
+              <Download className="w-4 h-4 mr-2" />
+              Download CSV
+            </Button>
+            <Button onClick={handlePrint} className="print:hidden">
+              <Printer className="w-4 h-4 mr-2" />
+              Print Bill
+            </Button>
+          </div>
         </div>
+        
+        {/* Export message */}
+        {exportMessage && (
+          <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-800 print:hidden">
+            {exportMessage}
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Side - Input Form */}
@@ -340,6 +456,25 @@ const BillGenerator = () => {
                       <Label htmlFor="interState" className="cursor-pointer">Inter-State (IGST)</Label>
                     </div>
                   </div>
+                </div>
+                <div>
+                  <Label className="block mb-2">Customer Type</Label>
+                  <RadioGroup 
+                    value={customerType} 
+                    onValueChange={(value: 'b2b' | 'b2c') => {
+                      setCustomerType(value);
+                    }}
+                    className="flex flex-col space-y-0"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="b2b" id="customer-type-b2b" />
+                      <Label htmlFor="customer-type-b2b" className="cursor-pointer">B2B (Business to Business)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="b2c" id="customer-type-b2c" />
+                      <Label htmlFor="customer-type-b2c" className="cursor-pointer">B2C (Business to Consumer)</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
               </CardContent>
             </Card>
@@ -566,7 +701,7 @@ const BillGenerator = () => {
                                 className="border-0 bg-transparent p-0 text-center focus-visible:ring-0 print:hidden"
                                 min="1"
                               />
-                              <span className="hidden print:block text-invoice-text">{item.quantity}</span>
+                              <span className="hidden print:block text-invoice-text">{parseInt(item.quantity.toString())}</span>
                             </td>
                             <td className="py-3 px-2 text-right">
                               <Input
@@ -682,9 +817,15 @@ const BillGenerator = () => {
                         <span>-₹ {calculateTotalItemDiscount().toFixed(2)}</span>
                       </div>
                     )}
-                    {calculateTotalGST() > 0 && (
+                    {calculateTotalGST() > 0 && isB2B && (
                       <div className="flex justify-between py-2 text-invoice-text">
-                        <span>GST ({isInterState ? 'IGST' : 'SGST + CGST'}):</span>
+                        <span>Total GST:</span>
+                        <span>₹ {calculateTotalGST().toFixed(2)}</span>
+                      </div>
+                    )}
+                    {calculateTotalGST() > 0 && !isB2B && (
+                      <div className="flex justify-between py-2 text-invoice-text">
+                        <span>Tax:</span>
                         <span>₹ {calculateTotalGST().toFixed(2)}</span>
                       </div>
                     )}
