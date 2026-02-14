@@ -855,12 +855,12 @@ const BillGenerator = () => {
                 <div className="mt-8 pt-6 border-t border-border">
                   <h3 className="font-semibold text-invoice-header mb-3">Terms & Conditions</h3>
                   <div className="text-sm text-invoice-text space-y-2">
-                    <p>01) Customer Notification: Notify us within 2 days of delivery. In case the delivered product is faulty, incorrect or not as specified. Post which such claim will not be liability of Macfos Limited.</p>
+                    <p>01) Customer Notification: Notify us within 2 days of delivery. In case the delivered product is faulty, incorrect or not as specified. Post which such claim will not be liability of Flyshaft Private Limited.</p>
                     <p>02) Warranty Replacement: Warranty claims result in product replacement then only product will be shipped. In case the product unavailable, a xx** % refund will be issued. (**based on scenario)</p>
                     <p>03) GST Compliance: The buyer must ensure an active GST number at the time of order booking. Inactive or missing GST number on the invoice shall be considered as B2C Supply; in such case no input tax credit can be claimed by the buyer.</p>
                     <p>04) Online Orders: Buyers must provide correct GST No. and other relevant details at the time of order booking only. No subsequent changes in the GST and other details shall be considered.</p>
-                    <p className="mt-4 font-medium">This is a computer generated Invoice.</p>
-                    <p className="font-medium">Subject to Barabanki Jurisdiction</p>
+                    <p className="mt-4 font-medium text-center">This is a computer generated Invoice.</p>
+                    <p className="font-medium text-center">Subject to Barabanki Jurisdiction</p>
                   </div>
                 </div>
               </CardContent>
