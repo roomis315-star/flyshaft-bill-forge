@@ -56,7 +56,7 @@ const BillGenerator = () => {
   ]);
   const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
   const [isInterState, setIsInterState] = useState<boolean>(false);
-  const [customerType, setCustomerType] = useState<'b2b' | 'b2c'>('b2b');
+  const [customerType, setCustomerType] = useState<'b2b' | 'd2c'>('b2b');
   
   // Derive isB2B from customerType for backward compatibility
   const isB2B = customerType === 'b2b';
@@ -450,7 +450,7 @@ const BillGenerator = () => {
                   <Label className="block mb-2">Customer Type</Label>
                   <RadioGroup 
                     value={customerType} 
-                    onValueChange={(value: 'b2b' | 'b2c') => {
+                    onValueChange={(value: 'b2b' | 'd2c') => {
                       setCustomerType(value);
                     }}
                     className="flex flex-col space-y-0"
@@ -460,8 +460,8 @@ const BillGenerator = () => {
                       <Label htmlFor="customer-type-b2b" className="cursor-pointer">B2B (Business to Business)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="b2c" id="customer-type-b2c" />
-                      <Label htmlFor="customer-type-b2c" className="cursor-pointer">B2C (Business to Consumer)</Label>
+                      <RadioGroupItem value="d2c" id="customer-type-d2c" />
+                      <Label htmlFor="customer-type-d2c" className="cursor-pointer">D2C (DIrect to Consumer)</Label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -601,7 +601,8 @@ const BillGenerator = () => {
                       <p>Uttar Pradesh UP</p>
                       <p>India</p>
                       <p>Phone: +91 8858927811</p>
-                      <p>GST No: 29ABCDE1234F1Z5</p>
+                      <p>GST No: 09AAGCF7695F1Z4</p>
+                      <p>CIN: U58200UP2025PTC239013</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -845,21 +846,17 @@ const BillGenerator = () => {
                   </div>
                 </div>
 
-                {/* Footer */}
-                <div className="mt-12 pt-8 border-t border-border text-center text-sm text-invoice-light">
-                  <p>Computer generated Invoice</p>
-                  <p>Thank you for your business!</p>
-                </div>
                 
                 {/* Terms and Conditions */}
                 <div className="mt-8 pt-6 border-t border-border">
                   <h3 className="font-semibold text-invoice-header mb-3">Terms & Conditions</h3>
-                  <div className="text-sm text-invoice-text space-y-2">
+                  <div className="text-sm text-invoice-text space-y-2 text-justify">
                     <p>01) Product Claims: All quality or delivery issues must be reported within 48 hours of receipt. Claims submitted after this period will not be entertained by Flyshaft Private Limited.</p>
                     <p>02) Warranty Service: Defective products covered under warranty will be replaced with equivalent items. If replacement stock is unavailable, customers will receive a proportional refund based on current market value.</p>
                     <p>03) Tax Compliance: Customers must provide valid GST registration details during purchase. Invoices issued without proper GST information will be treated as business-to-consumer transactions, restricting input credit claims.</p>
                     <p>04) Order Processing: All tax identification numbers and business details must be provided accurately at the time of order placement. Modifications to these details cannot be processed after order confirmation.</p>
                     <p className="mt-4 font-medium text-center">This is a computer generated Invoice.</p>
+                    <p className="mt-4 font-medium text-center">Thank you for your business!</p>
                     <p className="font-medium text-center">Subject to Barabanki Jurisdiction</p>
                   </div>
                 </div>
