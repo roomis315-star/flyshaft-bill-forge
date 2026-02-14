@@ -216,6 +216,7 @@ const BillGenerator = () => {
     return subtotal - itemDiscounts + gstAmount + deliveryCharge;
   };
 
+  // Handle print functionality
   const handlePrint = () => {
     // Inject minimal print styles and isolate invoice
     const styleEl = document.createElement('style');
