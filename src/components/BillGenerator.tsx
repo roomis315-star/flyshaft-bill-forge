@@ -8,8 +8,6 @@ import { Trash2, Plus, Printer, Download } from 'lucide-react';
 import flyshaftLogo from '@/assets/flyshaft-logo.png';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { sendInvoiceToGoogleSheet, downloadInvoiceAsCSV } from '@/utils/googleSheetsIntegration';
-
 
 interface LineItem {
   id: string;
@@ -258,14 +256,14 @@ const BillGenerator = () => {
       }
     `;
     document.head.appendChild(styleEl);
-  
+
     const originalTitle = document.title;
     document.title = invoiceDetails.invoiceNumber
       ? `Invoice ${invoiceDetails.invoiceNumber}`
       : 'Invoice';
-  
+
     window.print();
-  
+
     // Clean up styles after printing
     setTimeout(() => {
       document.title = originalTitle;
@@ -358,20 +356,10 @@ const BillGenerator = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-foreground">Bill Generator</h1>
-          <div className="flex items-center gap-2">
-            <Button onClick={handleExportToGoogleSheet} disabled={isExporting} className="print:hidden">
-              <Download className="w-4 h-4 mr-2" />
-              {isExporting ? 'Exporting...' : 'Export to Sheet'}
-            </Button>
-            <Button variant="outline" onClick={handleDownloadCSV} className="print:hidden">
-              <Download className="w-4 h-4 mr-2" />
-              Download CSV
-            </Button>
-            <Button onClick={handlePrint} className="print:hidden">
-              <Printer className="w-4 h-4 mr-2" />
-              Print Bill
-            </Button>
-          </div>
+          <Button onClick={handlePrint} className="print:hidden">
+            <Printer className="w-4 h-4 mr-2" />
+            Print Bill
+          </Button>
         </div>
         
         {/* Export message */}
