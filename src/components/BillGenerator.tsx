@@ -513,7 +513,7 @@ const BillGenerator = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="customerGst">GST Number (B2B)</Label>
+                  <Label htmlFor="customerGst">GST IN (B2B)</Label>
                   <Input
                     id="customerGst"
                     value={customerInfo.gstNumber || ''}
@@ -630,7 +630,7 @@ const BillGenerator = () => {
                       {customerInfo.address && <p className="whitespace-pre-line">{customerInfo.address}</p>}
                       {customerInfo.phone && <p>{customerInfo.phone}</p>}
                       {customerInfo.email && <p>{customerInfo.email}</p>}
-                      {customerInfo.gstNumber && <p><span className="font-medium">GST Number:</span> {customerInfo.gstNumber}</p>}
+                      {customerInfo.gstNumber && <p><span className="font-medium">GST IN:</span> {customerInfo.gstNumber}</p>}
                     </div>
                   </div>
                   <div className="md:text-right">
@@ -794,6 +794,121 @@ const BillGenerator = () => {
                   </Button>
                 </div>
 
+                {/* B2B Tax Breakdown Table */}
+                {isB2B && (
+                  <div className="mb-8">
+                    <h3 className="font-semibold text-invoice-header mb-3">Tax Breakdown</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border border-border">
+                        <thead>
+                          <tr className="bg-muted">
+                            <th className="text-left py-2 px-3 font-semibold text-invoice-header border-r border-border">Description</th>
+                            <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">Taxable Value (₹)</th>
+                            {!isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">CGST Rate (%)</th>}
+                            {!isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">CGST Amount (₹)</th>}
+                            {!isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">SGST Rate (%)</th>}
+                            {!isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">SGST Amount (₹)</th>}
+                            {isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">IGST Rate (%)</th>}
+                            {isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">IGST Amount (₹)</th>}
+                            <th className="text-right py-2 px-3 font-semibold text-invoice-header">Total Tax (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lineItems.map((item) => {
+                            const subtotal = item.quantity * item.unitPrice;
+                            const discountAmount = (subtotal * item.discount) / 100;
+                            const taxableValue = subtotal - discountAmount;
+                            
+                            let cgstAmount = 0;
+                            let sgstAmount = 0;
+                            let igstAmount = 0;
+                            let totalTax = 0;
+                            
+                            if (isInterState) {
+                              igstAmount = (taxableValue * item.igstRate) / 100;
+                              totalTax = igstAmount;
+                            } else {
+                              cgstAmount = (taxableValue * item.cgstRate) / 100;
+                              sgstAmount = (taxableValue * item.sgstRate) / 100;
+                              totalTax = cgstAmount + sgstAmount;
+                            }
+                            
+                            return (
+                              <tr key={`tax-${item.id}`} className="border-b border-border">
+                                <td className="py-2 px-3 text-invoice-text border-r border-border">
+                                  {item.productName || 'Item'}
+                                </td>
+                                <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                  {taxableValue.toFixed(2)}
+                                </td>
+                                {!isInterState && (
+                                  <>
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                      {item.cgstRate}%
+                                    </td>
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                      {cgstAmount.toFixed(2)}
+                                    </td>
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                      {item.sgstRate}%
+                                    </td>
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                      {sgstAmount.toFixed(2)}
+                                    </td>
+                                  </>
+                                )}
+                                {isInterState && (
+                                  <>
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                      {item.igstRate}%
+                                    </td>
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                      {igstAmount.toFixed(2)}
+                                    </td>
+                                  </>
+                                )}
+                                <td className="py-2 px-3 text-right font-medium text-invoice-text">
+                                  {totalTax.toFixed(2)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {/* Summary Row */}
+                          <tr className="bg-muted font-semibold">
+                            <td className="py-2 px-3 text-invoice-header border-r border-border">Total</td>
+                            <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                              ₹ {calculateSubtotal().toFixed(2)}
+                            </td>
+                            {!isInterState && (
+                              <>
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border"></td>
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                                  ₹ {(calculateTotalGST() / 2).toFixed(2)}
+                                </td>
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border"></td>
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                                  ₹ {(calculateTotalGST() / 2).toFixed(2)}
+                                </td>
+                              </>
+                            )}
+                            {isInterState && (
+                              <>
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border"></td>
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                                  ₹ {calculateTotalGST().toFixed(2)}
+                                </td>
+                              </>
+                            )}
+                            <td className="py-2 px-3 text-right text-invoice-header">
+                              ₹ {calculateTotalGST().toFixed(2)}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {/* Summary */}
                 <div className="flex justify-end">
                   <div className="w-80 space-y-2">
@@ -822,18 +937,24 @@ const BillGenerator = () => {
                     <div className="flex justify-between py-2 text-invoice-text">
                       <span>Delivery Charge:</span>
                       <div className="flex items-center">
-                        <span className="mr-2">₹</span>
-                        <Input
-                          type="number"
-                          value={deliveryCharge}
-                          onChange={(e) => setDeliveryCharge(Number(e.target.value))}
-                          className="w-24 border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
-                          min="0"
-                          step="0.01"
-                        />
-                        <span className="hidden print:block text-invoice-text">
-                          {deliveryCharge > 0 ? deliveryCharge.toFixed(2) : '0.00'}
-                        </span>
+                        {deliveryCharge > 0 ? (
+                          <>
+                            <span className="mr-2">₹</span>
+                            <Input
+                              type="number"
+                              value={deliveryCharge}
+                              onChange={(e) => setDeliveryCharge(Number(e.target.value))}
+                              className="w-24 border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                              min="0"
+                              step="0.01"
+                            />
+                            <span className="hidden print:block text-invoice-text">
+                              {deliveryCharge.toFixed(2)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="font-medium text-invoice-text">Free</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex justify-between py-3 border-t-2 border-border font-bold text-lg text-invoice-header">
@@ -856,7 +977,7 @@ const BillGenerator = () => {
                     <p>03) Tax Compliance: Customers must provide valid GST registration details during purchase. Invoices issued without proper GST information will be treated as business-to-consumer transactions, restricting input credit claims.</p>
                     <p>04) Order Processing: All tax identification numbers and business details must be provided accurately at the time of order placement. Modifications to these details cannot be processed after order confirmation.</p>
                     <p className="mt-4 font-medium text-center">This is a computer generated Invoice.</p>
-                    <p className="mt-4 font-medium text-center">Thank you for your business!</p>
+                    <p className="mt-4 font-medium text-center">Thank you!</p>
                     <p className="font-medium text-center">Subject to Barabanki Jurisdiction</p>
                   </div>
                 </div>
