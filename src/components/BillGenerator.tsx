@@ -13,6 +13,7 @@ interface LineItem {
   id: string;
   productName: string;
   hsn?: string;
+  sac?: string;
   quantity: number;
   unitPrice: number;
   discount: number;
@@ -52,11 +53,12 @@ interface InvoiceDetails {
 
 const BillGenerator = () => {
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', productName: '', hsn: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, cgstRate: 9, igstRate: 18 }
+    { id: '1', productName: '', hsn: '', sac: '', quantity: 1, unitPrice: 0, discount: 0, sgstRate: 9, cgstRate: 9, igstRate: 18 }
   ]);
   const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
   const [isInterState, setIsInterState] = useState<boolean>(false);
   const [customerType, setCustomerType] = useState<'b2b' | 'd2c'>('b2b');
+  const [itemType, setItemType] = useState<'hsn' | 'sac'>('hsn'); // New state for HSN/SAC selection
   
   // Derive isB2B from customerType for backward compatibility
   const isB2B = customerType === 'b2b';
@@ -141,6 +143,7 @@ const BillGenerator = () => {
         id: newId,
         productName: '',
         hsn: '',
+        sac: '',
         quantity: 1,
         unitPrice: 0,
         discount: 0,
@@ -461,7 +464,26 @@ const BillGenerator = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="d2c" id="customer-type-d2c" />
-                      <Label htmlFor="customer-type-d2c" className="cursor-pointer">D2C (DIrect to Consumer)</Label>
+                      <Label htmlFor="customer-type-d2c" className="cursor-pointer">D2C (Direct to Consumer)</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div>
+                  <Label className="block mb-2">Item Type</Label>
+                  <RadioGroup 
+                    value={itemType} 
+                    onValueChange={(value: 'hsn' | 'sac') => {
+                      setItemType(value);
+                    }}
+                    className="flex flex-col space-y-0"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="hsn" id="item-type-hsn" />
+                      <Label htmlFor="item-type-hsn" className="cursor-pointer">HSN (Goods)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="sac" id="item-type-sac" />
+                      <Label htmlFor="item-type-sac" className="cursor-pointer">SAC (Services)</Label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -601,7 +623,7 @@ const BillGenerator = () => {
                       <p>Uttar Pradesh UP</p>
                       <p>India</p>
                       <p>Phone: +91 8858927811</p>
-                      <p>GST No: 09AAGCF7695F1Z4</p>
+                      <p>GSTIN: 09AAGCF7695F1Z4</p>
                       <p>CIN: U58200UP2025PTC239013</p>
                     </div>
                   </div>
@@ -633,15 +655,17 @@ const BillGenerator = () => {
                       {customerInfo.gstNumber && <p><span className="font-medium">GST IN:</span> {customerInfo.gstNumber}</p>}
                     </div>
                   </div>
-                  <div className="md:text-right">
-                    <h3 className="font-semibold text-invoice-header mb-3">Ship To</h3>
-                    <div className="text-invoice-text space-y-1">
-                      {shippingInfo.name && <p className="font-medium">{shippingInfo.name}</p>}
-                      {shippingInfo.address && <p className="whitespace-pre-line">{shippingInfo.address}</p>}
-                      {shippingInfo.phone && <p>{shippingInfo.phone}</p>}
-                      {shippingInfo.email && <p>{shippingInfo.email}</p>}
+                  {itemType === 'hsn' && (
+                    <div className="md:text-right">
+                      <h3 className="font-semibold text-invoice-header mb-3">Ship To</h3>
+                      <div className="text-invoice-text space-y-1">
+                        {shippingInfo.name && <p className="font-medium">{shippingInfo.name}</p>}
+                        {shippingInfo.address && <p className="whitespace-pre-line">{shippingInfo.address}</p>}
+                        {shippingInfo.phone && <p>{shippingInfo.phone}</p>}
+                        {shippingInfo.email && <p>{shippingInfo.email}</p>}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Line Items Table */}
@@ -650,9 +674,11 @@ const BillGenerator = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b-2 border-border">
-                          <th className="text-left py-3 px-2 font-semibold text-invoice-header">Goods and Services</th>
-                          <th className="text-left py-3 px-2 font-semibold text-invoice-header">HSN/SAC</th>
-                          <th className="text-center py-3 px-2 font-semibold text-invoice-header">Qty</th>
+                          {itemType === 'hsn' && <th className="text-left py-3 px-2 font-semibold text-invoice-header">Goods</th>}
+                          {itemType === 'sac' && <th className="text-left py-3 px-2 font-semibold text-invoice-header">Services</th>}
+                          {itemType === 'hsn' && <th className="text-left py-3 px-2 font-semibold text-invoice-header">HSN</th>}
+                          {itemType === 'sac' && <th className="text-left py-3 px-2 font-semibold text-invoice-header">SAC</th>}
+                          {itemType === 'hsn' && <th className="text-center py-3 px-2 font-semibold text-invoice-header">Qty</th>}
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Rate (₹)</th>
                           <th className="text-right py-3 px-2 font-semibold text-invoice-header">Discount %</th>
                           {!isInterState && <th className="text-right py-3 px-2 font-semibold text-invoice-header">SGST %</th>}
@@ -675,24 +701,38 @@ const BillGenerator = () => {
                               <span className="hidden print:block text-invoice-text">{item.productName}</span>
                             </td>
                             <td className="py-3 px-2">
-                              <Input
-                                value={item.hsn}
-                                onChange={(e) => updateLineItem(item.id, 'hsn', e.target.value)}
-                                placeholder="HSN"
-                                className="border-0 bg-transparent p-0 focus-visible:ring-0 print:hidden"
-                              />
-                              <span className="hidden print:block text-invoice-text">{item.hsn}</span>
+                              {itemType === 'hsn' && (
+                                <Input
+                                  value={item.hsn}
+                                  onChange={(e) => updateLineItem(item.id, 'hsn', e.target.value)}
+                                  placeholder="HSN"
+                                  className="border-0 bg-transparent p-0 focus-visible:ring-0 print:hidden"
+                                />
+                              )}
+                              {itemType === 'sac' && (
+                                <Input
+                                  value={item.sac}
+                                  onChange={(e) => updateLineItem(item.id, 'sac', e.target.value)}
+                                  placeholder="SAC"
+                                  className="border-0 bg-transparent p-0 focus-visible:ring-0 print:hidden"
+                                />
+                              )}
+                              <span className="hidden print:block text-invoice-text">
+                                {itemType === 'hsn' ? item.hsn : item.sac}
+                              </span>
                             </td>
-                            <td className="py-3 px-2 text-center">
-                              <Input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateLineItem(item.id, 'quantity', Number(e.target.value))}
-                                className="border-0 bg-transparent p-0 text-center focus-visible:ring-0 print:hidden"
-                                min="1"
-                              />
-                              <span className="hidden print:block text-invoice-text">{parseInt(item.quantity.toString())}</span>
-                            </td>
+                            {itemType === 'hsn' && (
+                              <td className="py-3 px-2 text-center">
+                                <Input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => updateLineItem(item.id, 'quantity', Number(e.target.value))}
+                                  className="border-0 bg-transparent p-0 text-center focus-visible:ring-0 print:hidden"
+                                  min="1"
+                                />
+                                <span className="hidden print:block text-invoice-text">{parseInt(item.quantity.toString())}</span>
+                              </td>
+                            )}
                             <td className="py-3 px-2 text-right">
                               <Input
                                 type="number"
@@ -934,29 +974,31 @@ const BillGenerator = () => {
                         <span>₹ {calculateTotalGST().toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between py-2 text-invoice-text">
-                      <span>Delivery Charge:</span>
-                      <div className="flex items-center">
-                        {deliveryCharge > 0 ? (
-                          <>
-                            <span className="mr-2">₹</span>
-                            <Input
-                              type="number"
-                              value={deliveryCharge}
-                              onChange={(e) => setDeliveryCharge(Number(e.target.value))}
-                              className="w-24 border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
-                              min="0"
-                              step="0.01"
-                            />
-                            <span className="hidden print:block text-invoice-text">
-                              {deliveryCharge.toFixed(2)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="font-medium text-invoice-text">Free</span>
-                        )}
+                    {itemType === 'hsn' && (
+                      <div className="flex justify-between py-2 text-invoice-text">
+                        <span>Delivery Charge:</span>
+                        <div className="flex items-center">
+                          {deliveryCharge > 0 ? (
+                            <>
+                              <span className="mr-2">₹</span>
+                              <Input
+                                type="number"
+                                value={deliveryCharge}
+                                onChange={(e) => setDeliveryCharge(Number(e.target.value))}
+                                className="w-24 border-0 bg-transparent p-0 text-right focus-visible:ring-0 print:hidden"
+                                min="0"
+                                step="0.01"
+                              />
+                              <span className="hidden print:block text-invoice-text">
+                                {deliveryCharge.toFixed(2)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="font-medium text-invoice-text">Free</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="flex justify-between py-3 border-t-2 border-border font-bold text-lg text-invoice-header">
                       <span>Total:</span>
                       <span className="text-success">₹ {calculateFinalTotal().toFixed(2)}</span>
