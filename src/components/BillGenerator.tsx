@@ -232,6 +232,7 @@ const BillGenerator = () => {
           position: absolute;
           left: 0; top: 0;
           width: 100%;
+          margin-bottom: 80px; /* Add space for footer */
         }
         .print\\:hidden { display: none !important; }
         .hidden.print\\:block { display: block !important; }
@@ -254,9 +255,13 @@ const BillGenerator = () => {
           grid-template-columns: 1fr 1fr !important; 
           gap: 2rem !important; 
         }
+        /* Fixed footer for print */
+        .print\\:fixed {
+          position: fixed !important;
+        }
       }
       @page {
-        margin: 12mm 10mm;
+        margin: 12mm 10mm 20mm 10mm; /* Bottom margin for footer */
       }
     `;
     document.head.appendChild(styleEl);
@@ -611,7 +616,7 @@ const BillGenerator = () => {
           {/* Right Side - Bill Preview */}
           <div className="lg:col-span-2">
             <Card className="shadow-lg h-full flex flex-col">
-              <CardContent className="p-8 invoice-content flex-1 flex flex-col">
+              <CardContent className="p-8 invoice-content flex-1 flex flex-col pb-20">
                 {/* Header: left logo + company info (small), right invoice details */}
                 <div className="flex justify-between items-start mb-8">
                   <div>
@@ -1033,10 +1038,9 @@ const BillGenerator = () => {
                 </div>
                 
                 {/* Page Footer */}
-                <div className="mt-auto pt-6 border-t border-border text-center text-sm text-invoice-text print:fixed print:bottom-0 print:left-0 print:right-0 print:bg-white print:pb-4">
+                <div className="mt-auto pt-6 border-t border-border text-center text-xs text-invoice-text print:fixed print:bottom-0 print:left-0 print:right-0 print:bg-white print:pb-4">
                   <div className="space-y-1">
-                    <p><span className="font-medium">GSTIN:</span> 09AAGCF7695F1Z4 | <span className="font-medium">CIN:</span> U58200UP2025PTC239013</p>
-                    <p><span className="font-medium">Phone:</span> +91 8858927811 | <span className="font-medium">Email:</span> flyshaft7@gmail.com</p>
+                    <p><span className="font-normal">GSTIN:</span> 09AAGCF7695F1Z4 | <span className="font-normal">CIN:</span> U58200UP2025PTC239013 | <span className="font-normal">Phone:</span> +91 8858927811 | <span className="font-normal">Email:</span> flyshaft7@gmail.com</p>
                   </div>
                 </div>
               </CardContent>
