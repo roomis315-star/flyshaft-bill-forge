@@ -610,8 +610,8 @@ const BillGenerator = () => {
 
           {/* Right Side - Bill Preview */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardContent className="p-8 invoice-content">
+            <Card className="shadow-lg h-full flex flex-col">
+              <CardContent className="p-8 invoice-content flex-1 flex flex-col">
                 {/* Header: left logo + company info (small), right invoice details */}
                 <div className="flex justify-between items-start mb-8">
                   <div>
@@ -1009,12 +1009,11 @@ const BillGenerator = () => {
                   </div>
                 </div>
 
-                
                 {/* Terms and Conditions */}
                 <div className="mt-8 pt-6 border-t border-border">
                   <h3 className="font-semibold text-invoice-header mb-3">Terms & Conditions</h3>
                   <div className="text-sm text-invoice-text space-y-2 text-justify">
-                    <p>01) Product Claims: All claims relating to quality, quantity, damage, or delivery discrepancies must be reported in writing within 48 hours of receipt of goods. Claims received after this period shall not be entertained by Flyshaft Private Limited.</p>
+                    <p>01) Product Claims: All claims relating to quality, quantity, damage, or delivery discrepancies must be reported in writing or via email within 48 hours of receipt of goods. Claims received after this period shall not be entertained by Flyshaft Private Limited.</p>
                     <p>02) Inspection & Acceptance: Receipt of goods or services shall constitute full acceptance unless a written claim is submitted within the claim period. Installation, integration, or usage shall be deemed unconditional acceptance.</p>
                     <p>03) Warranty Service: Products covered under warranty shall be repaired or replaced with equivalent items at the Company's discretion. If replacement is not feasible due to stock unavailability, a proportionate refund based on prevailing market value shall be issued.</p>
                     <p>04) Warranty Limitations: Warranty excludes damage arising from physical impact, environmental exposure, electrical fluctuations, improper handling, unauthorized modifications, misuse, accidents, or operation beyond specified conditions.</p>
@@ -1030,6 +1029,14 @@ const BillGenerator = () => {
                     <p className="mt-4 font-medium text-center">This is a computer generated Invoice.</p>
                     <p className="mt-4 font-medium text-center">Thank you!</p>
                     <p className="font-medium text-center">Subject to Barabanki Jurisdiction</p>
+                  </div>
+                </div>
+                
+                {/* Page Footer */}
+                <div className="mt-auto pt-6 border-t border-border text-center text-sm text-invoice-text print:fixed print:bottom-0 print:left-0 print:right-0 print:bg-white print:pb-4">
+                  <div className="space-y-1">
+                    <p><span className="font-medium">GSTIN:</span> 09AAGCF7695F1Z4 | <span className="font-medium">CIN:</span> U58200UP2025PTC239013</p>
+                    <p><span className="font-medium">Phone:</span> +91 8858927811 | <span className="font-medium">Email:</span> flyshaft7@gmail.com</p>
                   </div>
                 </div>
               </CardContent>
