@@ -232,7 +232,7 @@ const BillGenerator = () => {
           position: absolute;
           left: 0; top: 0;
           width: 100%;
-          margin-bottom: 80px; /* Add space for footer */
+          padding-bottom: 60px; /* Space for footer */
         }
         .print\\:hidden { display: none !important; }
         .hidden.print\\:block { display: block !important; }
@@ -255,28 +255,68 @@ const BillGenerator = () => {
           grid-template-columns: 1fr 1fr !important; 
           gap: 2rem !important; 
         }
-        /* Fixed footer for print */
-        .print\\:fixed {
-          position: fixed !important;
+        /* Terms and conditions - ensure no content is cut off */
+        .terms-conditions {
+          page-break-inside: avoid;
+          margin-bottom: 50px;
+        }
+        /* Footer for print */
+        .print-footer {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 40px;
+          font-size: 11px;
+          background: white;
+          padding: 5px 0;
+          border-top: 1px solid #e5e5e5;
         }
       }
       @page {
-        margin: 12mm 10mm 20mm 10mm; /* Bottom margin for footer */
+        margin: 12mm 10mm 18mm 10mm;
       }
     `;
     document.head.appendChild(styleEl);
+
+    // Add footer to each page before printing
+    const addFooters = () => {
+      const content = document.querySelector('.invoice-content');
+      if (!content) return;
+      
+      // Remove existing footers
+      document.querySelectorAll('.dynamic-footer').forEach(el => el.remove());
+      
+      // Add footer to the content
+      const footer = document.createElement('div');
+      footer.className = 'dynamic-footer print-footer';
+      footer.innerHTML = `
+        <div style="text-align: center; font-size: 11px; color: #666;">
+          <div>
+            <span style="font-weight: normal;">GSTIN:</span> 09AAGCF7695F1Z4 | 
+            <span style="font-weight: normal;">CIN:</span> U58200UP2025PTC239013 | 
+            <span style="font-weight: normal;">Phone:</span> +91 8858927811 | 
+            <span style="font-weight: normal;">Email:</span> flyshaft7@gmail.com
+          </div>
+        </div>
+      `;
+      content.appendChild(footer);
+    };
 
     const originalTitle = document.title;
     document.title = invoiceDetails.invoiceNumber
       ? `Invoice ${invoiceDetails.invoiceNumber}`
       : 'Invoice';
 
+    // Add footers and print
+    addFooters();
     window.print();
 
-    // Clean up styles after printing
+    // Clean up styles and footers after printing
     setTimeout(() => {
       document.title = originalTitle;
       styleEl.remove();
+      document.querySelectorAll('.dynamic-footer').forEach(el => el.remove());
     }, 500);
   };
   
@@ -1015,7 +1055,7 @@ const BillGenerator = () => {
                 </div>
 
                 {/* Terms and Conditions */}
-                <div className="mt-8 pt-6 border-t border-border">
+                <div className="mt-8 pt-6 border-t border-border terms-conditions">
                   <h3 className="font-semibold text-invoice-header mb-3">Terms & Conditions</h3>
                   <div className="text-sm text-invoice-text space-y-2 text-justify">
                     <p>01) Product Claims: All claims relating to quality, quantity, damage, or delivery discrepancies must be reported in writing or via email within 48 hours of receipt of goods. Claims received after this period shall not be entertained by Flyshaft Private Limited.</p>
@@ -1037,12 +1077,7 @@ const BillGenerator = () => {
                   </div>
                 </div>
                 
-                {/* Page Footer */}
-                <div className="mt-auto pt-6 border-t border-border text-center text-xs text-invoice-text print:fixed print:bottom-0 print:left-0 print:right-0 print:bg-white print:pb-4">
-                  <div className="space-y-1">
-                    <p><span className="font-normal">GSTIN:</span> 09AAGCF7695F1Z4 | <span className="font-normal">CIN:</span> U58200UP2025PTC239013 | <span className="font-normal">Phone:</span> +91 8858927811 | <span className="font-normal">Email:</span> flyshaft7@gmail.com</p>
-                  </div>
-                </div>
+                {/* Page Footer - Removed static footer, now added dynamically during print */}
               </CardContent>
             </Card>
           </div>
