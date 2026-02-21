@@ -954,24 +954,24 @@ const BillGenerator = () => {
                   <div className="w-80 space-y-2">
                     <div className="flex justify-between py-2 text-invoice-text">
                       <span>Subtotal:</span>
-                      <span>₹ {calculateSubtotal().toFixed(2)}</span>
+                      <span className="whitespace-nowrap">₹ {calculateSubtotal().toFixed(2)}</span>
                     </div>
                     {calculateTotalItemDiscount() > 0 && (
                       <div className="flex justify-between py-2 text-invoice-text">
                         <span>Item Discounts:</span>
-                        <span>-₹ {calculateTotalItemDiscount().toFixed(2)}</span>
+                        <span className="whitespace-nowrap">-₹ {calculateTotalItemDiscount().toFixed(2)}</span>
                       </div>
                     )}
                     {calculateTotalGST() > 0 && isB2B && (
                       <div className="flex justify-between py-2 text-invoice-text">
                         <span>Total GST:</span>
-                        <span>₹ {calculateTotalGST().toFixed(2)}</span>
+                        <span className="whitespace-nowrap">₹ {calculateTotalGST().toFixed(2)}</span>
                       </div>
                     )}
                     {calculateTotalGST() > 0 && !isB2B && (
                       <div className="flex justify-between py-2 text-invoice-text">
                         <span>Tax:</span>
-                        <span>₹ {calculateTotalGST().toFixed(2)}</span>
+                        <span className="whitespace-nowrap">₹ {calculateTotalGST().toFixed(2)}</span>
                       </div>
                     )}
                     {itemType === 'hsn' && (
@@ -980,7 +980,7 @@ const BillGenerator = () => {
                         <div className="flex items-center">
                           {deliveryCharge > 0 ? (
                             <>
-                              <span className="mr-2">₹</span>
+                              <span className="mr-2 whitespace-nowrap">₹</span>
                               <Input
                                 type="number"
                                 value={deliveryCharge}
@@ -989,19 +989,19 @@ const BillGenerator = () => {
                                 min="0"
                                 step="0.01"
                               />
-                              <span className="hidden print:block text-invoice-text">
+                              <span className="hidden print:block text-invoice-text whitespace-nowrap">
                                 {deliveryCharge.toFixed(2)}
                               </span>
                             </>
                           ) : (
-                            <span className="font-medium text-invoice-text">Free</span>
+                            <span className="font-medium text-invoice-text whitespace-nowrap">Free</span>
                           )}
                         </div>
                       </div>
                     )}
                     <div className="flex justify-between py-3 border-t-2 border-border font-bold text-lg text-invoice-header">
                       <span>Total:</span>
-                      <span className="text-success">₹ {calculateFinalTotal().toFixed(2)}</span>
+                      <span className="text-success whitespace-nowrap">₹ {calculateFinalTotal().toFixed(2)}</span>
                     </div>
                     <div className="text-sm italic text-invoice-text">
                       Amount in words: {convertToWords(calculateFinalTotal())}
@@ -1014,10 +1014,19 @@ const BillGenerator = () => {
                 <div className="mt-8 pt-6 border-t border-border">
                   <h3 className="font-semibold text-invoice-header mb-3">Terms & Conditions</h3>
                   <div className="text-sm text-invoice-text space-y-2 text-justify">
-                    <p>01) Product Claims: All quality or delivery issues must be reported within 48 hours of receipt. Claims submitted after this period will not be entertained by Flyshaft Private Limited.</p>
-                    <p>02) Warranty Service: Defective products covered under warranty will be replaced with equivalent items. If replacement stock is unavailable, customers will receive a proportional refund based on current market value.</p>
-                    <p>03) Tax Compliance: Customers must provide valid GST registration details during purchase. Invoices issued without proper GST information will be treated as business-to-consumer transactions, restricting input credit claims.</p>
-                    <p>04) Order Processing: All tax identification numbers and business details must be provided accurately at the time of order placement. Modifications to these details cannot be processed after order confirmation.</p>
+                    <p>01) Product Claims: All claims relating to quality, quantity, damage, or delivery discrepancies must be reported in writing within 48 hours of receipt of goods. Claims received after this period shall not be entertained by Flyshaft Private Limited.</p>
+                    <p>02) Inspection & Acceptance: Receipt of goods or services shall constitute full acceptance unless a written claim is submitted within the claim period. Installation, integration, or usage shall be deemed unconditional acceptance.</p>
+                    <p>03) Warranty Service: Products covered under warranty shall be repaired or replaced with equivalent items at the Company's discretion. If replacement is not feasible due to stock unavailability, a proportionate refund based on prevailing market value shall be issued.</p>
+                    <p>04) Warranty Limitations: Warranty excludes damage arising from physical impact, environmental exposure, electrical fluctuations, improper handling, unauthorized modifications, misuse, accidents, or operation beyond specified conditions.</p>
+                    <p>05) Tax Compliance: Customers must provide valid and complete statutory tax details at the time of order placement. Invoices issued without correct information shall be treated as consumer transactions, and the Company shall not be responsible for denial of tax credits or benefits.</p>
+                    <p>06) Order Processing: All billing and statutory details must be furnished accurately at the time of confirmation. Post-confirmation modifications shall not be entertained.</p>
+                    <p>07) Pricing & Payment: Payments shall be made strictly as per agreed commercial terms. Delayed payments may attract applicable interest or administrative charges.</p>
+                    <p>08) Delivery & Risk Transfer: Risk in goods or deliverables shall pass upon dispatch or handover to the carrier or customer representative. The Company shall not be liable for transit loss or damage unless insured separately.</p>
+                    <p>09) Custom Work & Services: Customized products, development services, engineering services, manufacturing services, and design-based deliverables are non-cancellable and non-refundable once confirmed.</p>
+                    <p>10) Performance & Use Responsibility: All deliverables are supplied based on technical specifications and best engineering practices. Actual performance may vary depending on operating conditions, integration environment, and user handling.</p>
+                    <p>11) Intellectual Property: All technical documentation, designs, software, methodologies, and materials provided remain the intellectual property of the Company unless otherwise agreed in writing.</p>
+                    <p>12) Force Majeure: The Company shall not be liable for delays or failures caused by circumstances beyond reasonable control, including natural events, regulatory actions, supply disruptions, or infrastructure failures.</p>
+                    <p>13) Limitation of Liability: The Company's total liability under any claim shall not exceed the invoice value of the goods or services supplied. The Company shall not be liable for any indirect, incidental, or consequential losses.</p>
                     <p className="mt-4 font-medium text-center">This is a computer generated Invoice.</p>
                     <p className="mt-4 font-medium text-center">Thank you!</p>
                     <p className="font-medium text-center">Subject to Barabanki Jurisdiction</p>
