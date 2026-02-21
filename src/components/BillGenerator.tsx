@@ -232,7 +232,6 @@ const BillGenerator = () => {
           position: absolute;
           left: 0; top: 0;
           width: 100%;
-          padding-bottom: 60px; /* Space for footer */
         }
         .print\\:hidden { display: none !important; }
         .hidden.print\\:block { display: block !important; }
@@ -258,23 +257,25 @@ const BillGenerator = () => {
         /* Terms and conditions - ensure no content is cut off */
         .terms-conditions {
           page-break-inside: avoid;
-          margin-bottom: 50px;
         }
-        /* Footer for print */
+        /* Footer for print - positioned in the page margin area */
         .print-footer {
           position: fixed;
           bottom: 0;
           left: 0;
           right: 0;
-          height: 40px;
+          height: 15mm;
           font-size: 11px;
           background: white;
           padding: 5px 0;
           border-top: 1px solid #e5e5e5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
       }
       @page {
-        margin: 12mm 10mm 18mm 10mm;
+        margin: 12mm 10mm 20mm 10mm;
       }
     `;
     document.head.appendChild(styleEl);
