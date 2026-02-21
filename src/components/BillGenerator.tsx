@@ -254,9 +254,20 @@ const BillGenerator = () => {
           grid-template-columns: 1fr 1fr !important; 
           gap: 2rem !important; 
         }
-        /* Terms and conditions - ensure no content is cut off */
+        /* Prevent table headers from repeating on every page */
+        thead {
+          display: table-header-group;
+        }
+        table {
+          page-break-inside: auto;
+        }
+        thead {
+          display: table-row-group;
+        }
+        /* Terms and conditions - allow content to flow naturally */
         .terms-conditions {
-          page-break-inside: avoid;
+          page-break-inside: auto;
+          page-break-before: auto;
         }
         /* Footer for print - positioned in the page margin area */
         .print-footer {
@@ -896,7 +907,7 @@ const BillGenerator = () => {
                             {!isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">SGST Amount (₹)</th>}
                             {isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">IGST Rate (%)</th>}
                             {isInterState && <th className="text-right py-2 px-3 font-semibold text-invoice-header border-r border-border">IGST Amount (₹)</th>}
-                            <th className="text-right py-2 px-3 font-semibold text-invoice-header">Total Tax (₹)</th>
+                            <th className="text-right py-2 px-3 font-semibold text-invoice-header">Total GST (₹)</th>
                           </tr>
                         </thead>
                         <tbody>
