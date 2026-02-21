@@ -788,7 +788,7 @@ const BillGenerator = () => {
                                 min="0"
                                 step="0.01"
                               />
-                              <span className="hidden print:block text-invoice-text">
+                              <span className="hidden print:block text-invoice-text whitespace-nowrap">
                                 {item.unitPrice > 0 ? `₹ ${item.unitPrice.toFixed(2)}` : ''}
                               </span>
                             </td>
@@ -850,7 +850,7 @@ const BillGenerator = () => {
                                 </span>
                               </td>
                             )}
-                            <td className="py-3 px-2 text-right font-medium text-invoice-text">
+                            <td className="py-3 px-2 text-right font-medium text-invoice-text whitespace-nowrap">
                               ₹ {calculateLineTotal(item).toFixed(2)}
                             </td>
                             <td className="py-3 px-2 print:hidden">
@@ -924,7 +924,7 @@ const BillGenerator = () => {
                                 <td className="py-2 px-3 text-invoice-text border-r border-border">
                                   {item.productName || 'Item'}
                                 </td>
-                                <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                <td className="py-2 px-3 text-right text-invoice-text border-r border-border whitespace-nowrap">
                                   {taxableValue.toFixed(2)}
                                 </td>
                                 {!isInterState && (
@@ -932,13 +932,13 @@ const BillGenerator = () => {
                                     <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
                                       {item.cgstRate}%
                                     </td>
-                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border whitespace-nowrap">
                                       {cgstAmount.toFixed(2)}
                                     </td>
                                     <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
                                       {item.sgstRate}%
                                     </td>
-                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border whitespace-nowrap">
                                       {sgstAmount.toFixed(2)}
                                     </td>
                                   </>
@@ -948,12 +948,12 @@ const BillGenerator = () => {
                                     <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
                                       {item.igstRate}%
                                     </td>
-                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border">
+                                    <td className="py-2 px-3 text-right text-invoice-text border-r border-border whitespace-nowrap">
                                       {igstAmount.toFixed(2)}
                                     </td>
                                   </>
                                 )}
-                                <td className="py-2 px-3 text-right font-medium text-invoice-text">
+                                <td className="py-2 px-3 text-right font-medium text-invoice-text whitespace-nowrap">
                                   {totalTax.toFixed(2)}
                                 </td>
                               </tr>
@@ -962,17 +962,17 @@ const BillGenerator = () => {
                           {/* Summary Row */}
                           <tr className="bg-muted font-semibold">
                             <td className="py-2 px-3 text-invoice-header border-r border-border">Total</td>
-                            <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                            <td className="py-2 px-3 text-right text-invoice-header border-r border-border whitespace-nowrap">
                               ₹ {calculateSubtotal().toFixed(2)}
                             </td>
                             {!isInterState && (
                               <>
                                 <td className="py-2 px-3 text-right text-invoice-header border-r border-border"></td>
-                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border whitespace-nowrap">
                                   ₹ {(calculateTotalGST() / 2).toFixed(2)}
                                 </td>
                                 <td className="py-2 px-3 text-right text-invoice-header border-r border-border"></td>
-                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border whitespace-nowrap">
                                   ₹ {(calculateTotalGST() / 2).toFixed(2)}
                                 </td>
                               </>
@@ -980,12 +980,12 @@ const BillGenerator = () => {
                             {isInterState && (
                               <>
                                 <td className="py-2 px-3 text-right text-invoice-header border-r border-border"></td>
-                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border">
+                                <td className="py-2 px-3 text-right text-invoice-header border-r border-border whitespace-nowrap">
                                   ₹ {calculateTotalGST().toFixed(2)}
                                 </td>
                               </>
                             )}
-                            <td className="py-2 px-3 text-right text-invoice-header">
+                            <td className="py-2 px-3 text-right text-invoice-header whitespace-nowrap">
                               ₹ {calculateTotalGST().toFixed(2)}
                             </td>
                           </tr>
